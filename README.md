@@ -13,7 +13,15 @@ Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is the 
 ...
 
 # Usage
-## Input Files
+1. Create a conda environment using 
+     ([conda environment file](https://github.com/weizhouUMICH/SAIGE/blob/master/conda_env/environment-RSAIGE.yml)) 
+     Here is a link to download the [conda environment file](https://raw.githubusercontent.com/weizhouUMICH/SAIGE/master/conda_env/environment-RSAIGE.yml)
+
+     After downloading environment-RSAIGE.yml, run following command
+     ```
+       conda env create -f environment-RSAIGE.yml
+   ```
+
 
 
 
