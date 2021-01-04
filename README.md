@@ -24,9 +24,7 @@ Step1: Prepar input files
 
 Step2: Run DeepSpaCE
      
-     ```
        python DeepSpaCE.py
-     ```
 
 
 
