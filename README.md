@@ -33,4 +33,5 @@ Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is the 
 ...
 
 # License
-...
+GNU General Public License v3.0
+
