@@ -10,14 +10,14 @@ Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is the 
 - [License](#license)
 
 # Installation
-...
-
-# Usage
 1. Create a PyTorch environment ([PyTorch](https://pytorch.org/)) 
 
-     After downloading environment-RSAIGE.yml, run following command
+
+# Usage
+
+     Run DeepSpaCE
      ```
-       conda env create -f environment-RSAIGE.yml
+       python DeepSpaCE.py
      ```
 
 
