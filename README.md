@@ -14,8 +14,8 @@ Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is the 
 
 
 # Usage
-
-     Run DeepSpaCE
+Run DeepSpaCE
+     
      ```
        python DeepSpaCE.py
      ```
