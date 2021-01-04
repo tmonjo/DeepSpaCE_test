@@ -4,7 +4,7 @@ Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is the 
 
 
 # Table of Contents
-- [Requirement] (#requirement)
+- [Requirement](#requirement)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Citation](#citation)
