@@ -21,7 +21,6 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
     
 ## 2. Create an R environment
 
-## 3. Download scripts of DeepSpaCE
 
 
 # Usage
