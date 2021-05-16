@@ -11,9 +11,10 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [License](#license)
 
 # Requirement
-* Python >=3.7
-* PyTorch
-* R
+* Python 3.6
+%pipenv install Pipfile
+
+* R 3.6.3
 
 # Installation
 1. Create a PyTorch environment ([PyTorch](https://pytorch.org/)) 
