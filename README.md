@@ -32,7 +32,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
     Rscript 
 
-## Step2: Run DeepSpaCE
+## Run DeepSpaCE
 
     python DeepSpaCE.py [options]
 
