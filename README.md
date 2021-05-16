@@ -12,7 +12,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
 # Requirement
 * Python 3.6
-* R 3.6.3
+* R 3.6
 
 # Installation
 ## 1. Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
