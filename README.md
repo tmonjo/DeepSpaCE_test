@@ -1,6 +1,6 @@
 # DeepSpaCE
 
-Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is a method that predict spatial gene expression from tissue section images using deep learning.
+Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is a method that predicts spatial gene expression from tissue section images using deep learning.
 
 
 # Table of Contents
@@ -20,7 +20,9 @@ Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is a me
 
 
 # Usage
-## Step1: Prepare input files
+## Preprocessing of section image files
+
+## Preprocessing of spatial expression data measured by Visium
 
 ## Step2: Run DeepSpaCE
 
