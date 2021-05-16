@@ -15,23 +15,27 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 * R 3.6.3
 
 # Installation
-1. Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
+## 1. Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
 
-    %pipenv install Pipfile
+    python install Pipfile
     
-2. Create an R environment
+## 2. Create an R environment
 
-3. Download scripts of DeepSpaCE
+## 3. Download scripts of DeepSpaCE
 
 
 # Usage
 ## Preprocessing of section image files
 
+    python CropImage.py [options]
+
 ## Preprocessing of spatial expression data measured by Visium
+
+    Rscript 
 
 ## Step2: Run DeepSpaCE
 
-    python DeepSpaCE.py
+    python DeepSpaCE.py [options]
 
 
 
