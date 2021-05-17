@@ -30,7 +30,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
 ## Preprocessing of spatial expression data measured by Visium
 
-    Rscript 
+    Rscript NormalizeUMI.R rootDir sampleName threshold_count threshold_gene
 
 ## Run DeepSpaCE
 
