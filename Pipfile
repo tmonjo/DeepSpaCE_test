@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+opencv-python = "==4.3.0.36"
+jupyter = "==1.0.0"
+matplotlib = "==3.3.0"
+pandas = "==1.0.5"
+torch = "==1.5.1"
+torchvision = "==0.6.1"
+scikit-learn = "==0.23.1"
+mlxtend = "==0.17.2"
+albumentations = "==0.4.6"
+
+[requires]
+python_version = "3.6"
