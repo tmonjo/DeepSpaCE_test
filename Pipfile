@@ -15,6 +15,7 @@ torchvision = "==0.6.1"
 scikit-learn = "==0.23.1"
 mlxtend = "==0.17.2"
 albumentations = "==0.4.6"
+tqdm = "==4.48.0"
 
 [requires]
 python_version = "3.6"
