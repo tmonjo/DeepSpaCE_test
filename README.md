@@ -26,7 +26,14 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 # Usage
 ## Preprocessing of section image files
 
-    python CropImage.py [options]
+    python CropImage.py \
+        --rootDir /home/monjo/DeepSpaCE/data \
+        --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+        --transposeType 0 \
+        --radiusPixel 75 \
+        --extraSize 150 \
+        --quantileRGB 80
+
 
 ## Preprocessing of spatial expression data measured by Visium
 
