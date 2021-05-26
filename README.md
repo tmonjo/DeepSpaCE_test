@@ -51,13 +51,36 @@ Create an R environment
 ## Run DeepSpaCE
     singularity exec DeepSpaCE.sif \
         python DeepSpaCE.py \
-        
-
-
-
+            --rootDir　/home/monjo/DeepSpaCE/ \
+            --dataDir /home/monjo/DeepSpaCE/data \
+            --batch_size 128 \
+            --num_epochs 10 \
+            --lr 1e-4 \
+            --weight_decay 1e-4 \
+            --model vgg16 \
+            --clusteringMethod graphclust \
+            --rm_cluster \
+            --cuda \
+            --full \
+            --quantileRGB 80 \
+            --seed 0 \
+            --threads 8 \
+            --GPUs 1 \
+            --early_stop_max 5 \
+            --extraSize 150 \
+            --sampleNames_train Human_Breast_Cancer_Block_A_Section_1 \
+            --sampleNames_test Human_Breast_Cancer_Block_A_Section_1 \
+            --sampleNames_semi None \
+            --semi_option normal \
+            --geneSymbols ESR1,ERBB2,MKI67 \
+            --augmentation flip,crop,color,random \
+            --cross_index 0
 
 # Citation
-...
+The DeepSpaCE pre-print:  
+Taku Monjo, Masaru Koido, Satoi Nagasawa, Yutaka Suzuki, and Yoichiro Kamatani “Efficient prediction of a spatial transcriptomics profile better characterizes breast cancer tissue sections without costly experimentation” bioRxiv (2021)
+https://www.biorxiv.org/content/10.1101/2021.04.22.440763v1
+
 
 # License
 GNU General Public License v3.0
