@@ -59,7 +59,6 @@ Create an R environment
             --weight_decay 1e-4 \
             --model vgg16 \
             --clusteringMethod graphclust \
-            --rm_cluster \
             --cuda \
             --full \
             --quantileRGB 80 \
