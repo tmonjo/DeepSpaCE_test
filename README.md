@@ -11,6 +11,9 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [License](#license)
 
 # Requirement
+* Singularity >=3.7
+
+# Requirement (if Singularity is not availeble)
 * Python 3.6
 * R 3.6
 
@@ -26,26 +29,29 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 # Usage
 ## Preprocessing of section image files
 
-    python CropImage.py \
-        --rootDir /home/$USER/DeepSpaCE/data \
-        --sampleName Human_Breast_Cancer_Block_A_Section_1 \
-        --transposeType 0 \
-        --radiusPixel 75 \
-        --extraSize 150 \
-        --quantileRGB 80
+    singularity exec DeepSpaCE.sif \
+        python CropImage.py \
+            --rootDir /home/$USER/DeepSpaCE/data \
+            --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+            --transposeType 0 \
+            --radiusPixel 75 \
+            --extraSize 150 \
+            --quantileRGB 80
 
 
 ## Preprocessing of spatial expression data measured by Visium
 
-    Rscript NormalizeUMI.R \
-        --rootDir /home/$USER/DeepSpaCE/data \
-        --sampleName Human_Breast_Cancer_Block_A_Section_1 \
-        --threshold_count 1000 \
-        --threshold_gene 1000
+    singularity exec DeepSpaCE.sif \
+        Rscript NormalizeUMI.R \
+            --rootDir /home/$USER/DeepSpaCE/data \
+            --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+            --threshold_count 1000 \
+            --threshold_gene 1000
 
 ## Run DeepSpaCE
-
-    python DeepSpaCE.py [options]
+    singularity exec DeepSpaCE.sif \
+        python DeepSpaCE.py \
+        
 
 
 
