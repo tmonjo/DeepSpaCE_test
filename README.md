@@ -51,8 +51,8 @@ Create an R environment
 ## Run DeepSpaCE
     singularity exec DeepSpaCE.sif \
         python DeepSpaCE.py \
-            --rootDir　/home/monjo/DeepSpaCE/ \
-            --dataDir /home/monjo/DeepSpaCE/data \
+            --rootDir　/home/$USER/DeepSpaCE/ \
+            --dataDir /home/$USER/DeepSpaCE/data \
             --batch_size 128 \
             --num_epochs 10 \
             --lr 1e-4 \
