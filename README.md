@@ -53,27 +53,28 @@ Create an R environment
         python DeepSpaCE.py \
             --rootDir /home/$USER/DeepSpaCE/ \
             --dataDir /home/$USER/DeepSpaCE/data \
-            --batch_size 128 \
-            --num_epochs 10 \
-            --lr 1e-4 \
-            --weight_decay 1e-4 \
-            --model vgg16 \
-            --clusteringMethod graphclust \
-            --cuda \
-            --full \
-            --quantileRGB 80 \
-            --seed 0 \
-            --threads 8 \
-            --GPUs 1 \
-            --early_stop_max 5 \
-            --extraSize 150 \
             --sampleNames_train Human_Breast_Cancer_Block_A_Section_1 \
             --sampleNames_test Human_Breast_Cancer_Block_A_Section_1 \
             --sampleNames_semi None \
             --semi_option normal \
-            --geneSymbols ESR1,ERBB2,MKI67 \
+            --seed 0 \
+            --threads 8 \
+            --GPUs 1 \
+            --cuda \
+            --full \
+            --model vgg16 \
+            --batch_size 128 \
+            --num_epochs 10 \
+            --lr 1e-4 \
+            --weight_decay 1e-4 \
+            --clusteringMethod graphclust \
+            --extraSize 150 \
+            --quantileRGB 80 \
             --augmentation flip,crop,color,random \
-            --cross_index 0
+            --early_stop_max 5 \
+            --cross_index 0 \
+            --geneSymbols ESR1,ERBB2,MKI67 \
+
 
 # Citation
 The DeepSpaCE pre-print:  
