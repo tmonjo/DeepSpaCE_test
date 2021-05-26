@@ -18,12 +18,12 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 * R 3.6
 
 # Installation
-## 1. Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
-
-    pipenv install Pipfile
+## Setup Python and R environment (if Singularity is not availeble)
+Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
     
-## 2. Create an R environment
-
+    pipenv install Pipfile    
+    
+Create an R environment
 
 
 # Usage
