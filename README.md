@@ -27,7 +27,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
 
 # Usage
-## Preprocessing of section image files
+## Preprocessing 1: Section image files
 
     singularity exec DeepSpaCE.sif \
         python CropImage.py \
@@ -39,7 +39,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
             --quantileRGB 80
 
 
-## Preprocessing of spatial expression data measured by Visium
+## Preprocessing 2: Satial expression data measured by Visium
 
     singularity exec DeepSpaCE.sif \
         Rscript NormalizeUMI.R \
