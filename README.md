@@ -11,7 +11,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [License](#license)
 
 # Requirement
-* Singularity >=3.7
+* Singularity >= 3.7
 
 # Requirement (if Singularity is not availeble)
 * Python 3.6
