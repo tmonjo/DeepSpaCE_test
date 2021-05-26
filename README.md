@@ -73,7 +73,7 @@ Create an R environment
             --augmentation flip,crop,color,random \
             --early_stop_max 5 \
             --cross_index 0 \
-            --geneSymbols ESR1,ERBB2,MKI67 \
+            --geneSymbols ESR1,ERBB2,MKI67
 
 
 # Citation
