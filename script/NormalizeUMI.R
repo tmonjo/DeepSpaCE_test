@@ -2,39 +2,42 @@ rm(list=ls())
 options(stringsAsFactors=F)
 
 library(Seurat)
-library(SeuratData)
+#library(SeuratData)
 library(ggplot2)
 library(patchwork)
 library(dplyr)
 library(data.table)
 
 library(Matrix)
-library(rjson)
+#library(rjson)
 library(cowplot)
 library(RColorBrewer)
 library(grid)
 library(readbitmap)
-library(hdf5r)
+#library(hdf5r)
+library(argparse)
 
 
-## Define Your Samples
-if(interactive()){
-  rootDir <- "/home/monjo/DeepSpaCE/data"
-  sampleName <- "Human_Breast_Cancer_Block_A_Section_1"
+# create parser object
+parser <- ArgumentParser()
 
-  threshold_count <- 1000
-  threshold_gene <- 1000
-  
-}else{
-  args <- commandArgs(trailingOnly = T)
+parser$add_argument("--rootDir", default="/home/monjo/DeepSpaCE/data",
+                    help="rootDir [default %(default)s]")
+parser$add_argument("--sampleName", default="Human_Breast_Cancer_Block_A_Section_1",
+                    help="sampleName [default %(default)s]")
+parser$add_argument("--threshold_count", type="integer", default=1000,
+                    help="threshold_count [default %(default)s]")
+parser$add_argument("--threshold_gene", type="integer", default=1000,
+                    help="threshold_gene [default %(default)s]")
 
-  rootDir <- args[1]
-  sampleName <- args[2]
-  
-  threshold_count <- as.integer(args[3])
-  threshold_gene <- as.integer(args[4])
-  
-}
+args <- parser$parse_args()
+
+
+rootDir <- args$rootDir
+sampleName <- args$sampleName
+threshold_count <- args$threshold_count
+threshold_gene <- args$threshold_gene
+
 
 print(paste0("rootDir: ",rootDir))
 print(paste0("sampleName: ",sampleName))
