@@ -53,7 +53,7 @@ Create an R environment
             --threshold_count 1000 \
             --threshold_gene 1000
 
-## Run DeepSpaCE
+## Run DeepSpaCE (Training and validation)
     singularity exec DeepSpaCE.sif \
         python DeepSpaCE.py \
             --rootDir /home/$USER/DeepSpaCE/ \
@@ -79,6 +79,8 @@ Create an R environment
             --early_stop_max 5 \
             --cross_index 0 \
             --geneSymbols ESR1,ERBB2,MKI67
+
+## Super-resolution
 
 
 # Citation
