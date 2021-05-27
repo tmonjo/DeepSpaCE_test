@@ -1,0 +1,81 @@
+Bootstrap: docker
+From: ubuntu:18.04
+
+%help
+    DeepSpaCE
+
+%post
+    ### apt-get ###
+    apt update
+    apt -y upgrade
+	apt install -y wget
+
+
+    ### install Python 3.6 ###
+    apt install -y python3.6
+    apt install -y python3-pip
+
+	ln -s /usr/bin/python3.6 /usr/bin/python
+
+
+	### install OpenCV dependencies ###
+	apt install -y libsm6
+	apt install -y libxrender1
+
+
+    ### install Python modules ###
+    python -m pip install --upgrade pip
+
+	python -m pip install numpy==1.19.0
+	python -m pip install scipy==1.4.1
+	python -m pip install pandas==1.0.5
+	python -m pip install matplotlib==3.3.0
+	python -m pip install opencv-python==4.3.0.36
+	python -m pip install torch==1.5.1
+	python -m pip install torchvision==0.6.1
+	python -m pip install scikit-learn==0.23.1
+	python -m pip install mlxtend==0.17.2
+	python -m pip install albumentations==0.4.6
+	python -m pip install tqdm==4.48.0
+
+
+	### install R 4.1 ###
+	# install two helper packages
+	apt install --no-install-recommends -y software-properties-common dirmngr
+
+	# import the signing key (by Michael Rutter) for these repo
+	apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+
+	# add the R 4.1 repo from CRAN
+	add-apt-repository "deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/"
+
+	apt update
+	DEBIAN_FRONTEND=noninteractive apt install -y r-base
+
+
+    ### install R package dependencies ###
+    apt install -y libxml2-dev
+	apt install -y libssl-dev
+	apt install -y libcurl4-openssl-dev
+	apt install -y libcairo2-dev # hrbrthemes
+	apt install -y libtiff-dev # readbitmap
+	apt install -y libhdf5-dev # hdf5r
+
+
+	### install R packages ###
+	R --slave -e 'install.packages("tidyverse")'
+	R --slave -e 'install.packages("data.table")'
+	R --slave -e 'install.packages("hrbrthemes")'
+	R --slave -e 'install.packages("Seurat")'
+	R --slave -e 'install.packages("rjson")'
+	R --slave -e 'install.packages("readbitmap")'
+	R --slave -e 'install.packages("hdf5r")'
+	R --slave -e 'install.packages("ggpubr")'
+	R --slave -e 'install.packages("argparse")'
+
+
+%environment
+
+
+%labels
+    Taku Monjo
