@@ -2,12 +2,12 @@ Bootstrap: docker
 From: ubuntu:18.04
 
 %help
-    DeepSpaCE
+	DeepSpaCE
 
 %post
-    ### apt-get ###
-    apt update
-    apt -y upgrade
+	### apt-get ###
+	apt update
+	apt -y upgrade
 	apt install -y wget
 
 
@@ -23,8 +23,8 @@ From: ubuntu:18.04
 	apt install -y libxrender1
 
 
-    ### install Python modules ###
-    python -m pip install --upgrade pip
+	### install Python modules ###
+	python -m pip install --upgrade pip
 
 	python -m pip install numpy==1.19.0
 	python -m pip install scipy==1.4.1
@@ -53,7 +53,7 @@ From: ubuntu:18.04
 	DEBIAN_FRONTEND=noninteractive apt install -y r-base
 
 
-    ### install R package dependencies ###
+	### install R package dependencies ###
     apt install -y libxml2-dev
 	apt install -y libssl-dev
 	apt install -y libcurl4-openssl-dev
@@ -78,4 +78,4 @@ From: ubuntu:18.04
 
 
 %labels
-    Taku Monjo
+	Taku Monjo
