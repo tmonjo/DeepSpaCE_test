@@ -22,9 +22,8 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
 ## Build a Singularity image
 
-    Build an image on your local environment since the root privileges are required.
-    
-    Then, you can run DeepSpaCE with "DeepSpaCE.sif" on any servers.
+Build an image on your local environment since the root privileges are required.  
+Then, you can run DeepSpaCE with "DeepSpaCE.sif" on any servers.
 
     sudo singularity build DeepSpaCE.sif DeepSpaCE.srecipe
 
