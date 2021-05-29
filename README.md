@@ -16,11 +16,11 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
 
 # Installation
-## Clone DeepSpaCE repository
+## Clone the DeepSpaCE repository
 
     git clone https://github.com/tmonjo/DeepSpaCE
 
-## Build Singularity image
+## Build a Singularity image
 
     sudo singularity build DeepSpaCE.sif DeepSpaCE.srecipe
 
