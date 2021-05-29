@@ -12,11 +12,8 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [FAQ](#FAQ)
 
 # Requirement
-* Singularity >= 3.7
+* Singularity >= 3.7  ([Singularity](https://sylabs.io/guides/3.7/user-guide/))
 
-## Requirement (if Singularity is not availeble)
-* Python 3.6
-* R >= 4.1
 
 # Installation
 ## Clone DeepSpaCE repository
@@ -101,7 +98,7 @@ GNU General Public License v3.0
 
     Please install Python 3.6, R >= 4.1, and libraries written in "DeepSpaCE.srecipe".
 
-    Pipfile is also available.
+    Pipfile is also available. ([Pipenv](https://pipenv.pypa.io/))
 
         pipenv install Pipfile
 
