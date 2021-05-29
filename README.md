@@ -24,13 +24,6 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 
     sudo singularity build DeepSpaCE.sif DeepSpaCE.srecipe
 
-## Setup Python and R environment (if Singularity is not availeble)
-Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
-    
-    pipenv install Pipfile    
-    
-Create an R environment
-
 
 # Usage
 ## Preprocessing 1: Section image files
