@@ -9,6 +9,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [Usage](#usage)
 - [Citation](#citation)
 - [License](#license)
+- [FAQ](#FAQ)
 
 # Requirement
 * Singularity >= 3.7
@@ -18,10 +19,13 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 * R >= 4.1
 
 # Installation
+## Clone DeepSpaCE repository
+
+    git clone https://github.com/tmonjo/DeepSpaCE
+
 ## Build Singularity image
 
-    sudo singularity build DeepSpaCE.sif DeepSpaCE.srecipe    
-
+    sudo singularity build DeepSpaCE.sif DeepSpaCE.srecipe
 
 ## Setup Python and R environment (if Singularity is not availeble)
 Create a Python environment ([Pipenv](https://pipenv.pypa.io/))
@@ -91,4 +95,13 @@ https://www.biorxiv.org/content/10.1101/2021.04.22.440763v1
 
 # License
 GNU General Public License v3.0
+
+# FAQ
+1. Can I install DeepSpaCE without Singularity?
+
+    Please install Python 3.6, R >= 4.1, and libraries written in "DeepSpaCE.srecipe".
+
+    Pipfile is also available.
+
+        pipenv install Pipfile
 
