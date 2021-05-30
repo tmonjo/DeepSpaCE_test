@@ -10,6 +10,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [Citation](#citation)
 - [License](#license)
 - [FAQ](#FAQ)
+- [Release notes](# Release notes)
 
 # Requirement
 * Singularity >= 3.7  ([Singularity](https://sylabs.io/guides/3.7/user-guide/))
@@ -97,3 +98,5 @@ GNU General Public License v3.0
 
         pipenv install Pipfile
 
+# Release notes
+v0.1 (?? June 2021): First release
