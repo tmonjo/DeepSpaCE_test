@@ -79,6 +79,15 @@ Build an image on your local environment since root privileges are required. The
 
 ## Super-resolution
 
+### Run super-resolution
+    singularity exec DeepSpaCE.sif \
+        python SuperResolution.py \
+
+### Plot a super-resolved image
+    singularity exec DeepSpaCE.sif \
+        Rscript SuperResolution.py \
+
+
 
 # Citation
 The DeepSpaCE pre-print:  
