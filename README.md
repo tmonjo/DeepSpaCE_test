@@ -99,4 +99,5 @@ GNU General Public License v3.0
         pipenv install Pipfile
 
 # Release notes
-v0.1 (?? June 2021): First release
+
+* v0.1 (June ?? 2021): First release
