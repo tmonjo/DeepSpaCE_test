@@ -40,21 +40,20 @@ Build an image on your local environment since root privileges are required. The
             --extraSize 150 \
             --quantileRGB 80
 
-
 ## Preprocessing 2: Satial expression data measured by Visium
 
     singularity exec DeepSpaCE.sif \
         Rscript NormalizeUMI.R \
-            --rootDir /home/$USER/DeepSpaCE/data \
+            --dataDir /home/$USER/DeepSpaCE/data \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --threshold_count 1000 \
             --threshold_gene 1000
 
 ## Run DeepSpaCE (Training and validation)
-    singularity exec DeepSpaCE.sif \
+    singularity exec --nv DeepSpaCE.sif \
         python DeepSpaCE.py \
-            --rootDir /home/$USER/DeepSpaCE/ \
             --dataDir /home/$USER/DeepSpaCE/data \
+            --outDir /home/$USER/DeepSpaCE/ \
             --sampleNames_train Human_Breast_Cancer_Block_A_Section_1 \
             --sampleNames_test Human_Breast_Cancer_Block_A_Section_1 \
             --sampleNames_semi None \
@@ -77,16 +76,36 @@ Build an image on your local environment since root privileges are required. The
             --cross_index 0 \
             --geneSymbols ESR1,ERBB2,MKI67
 
+
 ## Super-resolution
 
 ### Run super-resolution
-    singularity exec DeepSpaCE.sif \
-        python SuperResolution.py \
+    singularity exec --nv DeepSpaCE.sif \
+    python ./SuperResolution.py \
+    --dataDir /home/$USER/DeepSpaCE/data \
+    --modelDir /home/$USER/DeepSpaCE/out \
+    --outDir /home/$USER/DeepSpaCE/out \
+    --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+    --seed 0 \
+    --threads 8 \
+    --GPUs 1 \
+    --cuda \
+    --full \
+    --modelName teacher \
+    --batch_size 128 \
+    --extraSize 150 \
+    --quantileRGB 80 \
+    --geneSymbols ESR1,ERBB2,MKI67
 
 ### Plot a super-resolved image
     singularity exec DeepSpaCE.sif \
-        Rscript SuperResolution.py \
-
+    Rscript ./PlotSuperResolution.R \
+    --dataDir /home/$USER/DeepSpaCE/data \
+    --outDir /home/$USER/DeepSpaCE/out \
+    --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+    --geneSymbol ESR1 \
+    --extraSize 150 \
+    --resolution low
 
 
 # Citation
