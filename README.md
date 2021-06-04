@@ -50,6 +50,7 @@ Build an image on your local environment since root privileges are required. The
             --threshold_gene 1000
 
 ## Run DeepSpaCE (Training and validation)
+
     singularity exec --nv DeepSpaCE.sif \
         python DeepSpaCE.py \
             --dataDir /home/$USER/DeepSpaCE/data \
@@ -80,32 +81,34 @@ Build an image on your local environment since root privileges are required. The
 ## Super-resolution
 
 ### Run super-resolution
+
     singularity exec --nv DeepSpaCE.sif \
-    python ./SuperResolution.py \
-    --dataDir /home/$USER/DeepSpaCE/data \
-    --modelDir /home/$USER/DeepSpaCE/out \
-    --outDir /home/$USER/DeepSpaCE/out \
-    --sampleName Human_Breast_Cancer_Block_A_Section_1 \
-    --seed 0 \
-    --threads 8 \
-    --GPUs 1 \
-    --cuda \
-    --full \
-    --modelName teacher \
-    --batch_size 128 \
-    --extraSize 150 \
-    --quantileRGB 80 \
-    --geneSymbols ESR1,ERBB2,MKI67
+        python ./SuperResolution.py \
+            --dataDir /home/$USER/DeepSpaCE/data \
+            --modelDir /home/$USER/DeepSpaCE/out \
+            --outDir /home/$USER/DeepSpaCE/out \
+            --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+            --seed 0 \
+            --threads 8 \
+            --GPUs 1 \
+            --cuda \
+            --full \
+            --modelName teacher \
+            --batch_size 128 \
+            --extraSize 150 \
+            --quantileRGB 80 \
+            --geneSymbols ESR1,ERBB2,MKI67
 
 ### Plot a super-resolved image
+
     singularity exec DeepSpaCE.sif \
-    Rscript ./PlotSuperResolution.R \
-    --dataDir /home/$USER/DeepSpaCE/data \
-    --outDir /home/$USER/DeepSpaCE/out \
-    --sampleName Human_Breast_Cancer_Block_A_Section_1 \
-    --geneSymbol ESR1 \
-    --extraSize 150 \
-    --resolution low
+        Rscript ./PlotSuperResolution.R \
+            --dataDir /home/$USER/DeepSpaCE/data \
+            --outDir /home/$USER/DeepSpaCE/out \
+            --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+            --geneSymbol ESR1 \
+            --extraSize 150 \
+            --resolution low
 
 
 # Citation
