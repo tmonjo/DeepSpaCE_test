@@ -12,7 +12,7 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [FAQ](#FAQ)
 - [Release notes](#Release-notes)
 
-# Requirement
+# Requirement (verified)
 * Singularity >= 3.7  ([Singularity](https://sylabs.io/guides/3.7/user-guide/))
 
 
@@ -33,7 +33,7 @@ Build an image on your local environment since root privileges are required. The
 
     singularity exec DeepSpaCE.sif \
         python CropImage.py \
-            --rootDir /home/$USER/DeepSpaCE/data \
+            --dataDir /home/$USER/DeepSpaCE/data \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --transposeType 0 \
             --radiusPixel 75 \
@@ -63,7 +63,7 @@ Build an image on your local environment since root privileges are required. The
             --threads 8 \
             --GPUs 1 \
             --cuda \
-            --full \
+            --transfer \
             --model vgg16 \
             --batch_size 128 \
             --num_epochs 10 \
@@ -131,4 +131,4 @@ GNU General Public License v3.0
 
 # Release notes
 
-* v0.1 (June ?? 2021): First release
+* v0.1 (August ?? 2021): First release
