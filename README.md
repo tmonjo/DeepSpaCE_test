@@ -12,8 +12,8 @@ The Deep learning model for Spatial gene Clusters and Expression (DeepSpaCE) is 
 - [FAQ](#FAQ)
 - [Release notes](#Release-notes)
 
-# Requirement (verified)
-* Singularity >= 3.7  ([Singularity](https://sylabs.io/guides/3.7/user-guide/))
+# Requirement
+* Singularity (verified in [v3.7](https://sylabs.io/guides/3.7/user-guide/))
 
 
 # Installation
