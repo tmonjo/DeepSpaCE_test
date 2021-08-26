@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[66]:
-
 
 import math
 import numpy as np
@@ -10,37 +8,46 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.use('Agg')
+
 import argparse
 import subprocess
+import os
 
 import cv2
 from PIL import Image
 
 
-# In[61]:
-
 
 parser = argparse.ArgumentParser(description='Crop Image')
-parser.add_argument('--rootDir', type=str, default='/home/monjo/DeepSpaCE/data')
-parser.add_argument('--sampleName', type=str, default='Human_Breast_Cancer_Block_A_Section_1')
-parser.add_argument('--transposeType', type=int, default=0, help='0: No transpose, 1: Rotate90CC, 2: Rotate90CC+Flip')
-parser.add_argument('--radiusPixel', type=int, default=40)
-parser.add_argument('--extraSize', type=int, default=150)
-parser.add_argument('--quantileRGB', type=int, default=80)
+
+parser.add_argument('--dataDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/data',
+                   help='Data directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/data'+')')
+
+parser.add_argument('--sampleName', type=str, default='Human_Breast_Cancer_Block_A_Section_1',
+                   help='Sample name (default: Human_Breast_Cancer_Block_A_Section_1)')
+
+parser.add_argument('--transposeType', type=int, default=0,
+                   help='0: No transpose, 1: Rotate90CC, 2: Rotate90CC+Flip (default: 0)')
+
+parser.add_argument('--radiusPixel', type=int, default=40,
+                   help='Radius [pixel] (default: 40)')
+
+parser.add_argument('--extraSize', type=int, default=150,
+                   help='Extra image size (default: 150)')
+
+parser.add_argument('--quantileRGB', type=int, default=80,
+                   help='Threshold of quantile RGB (default: 80)')
+
 args = parser.parse_args()
 
-
-# In[62]:
 
 
 print(args)
 
 
-# In[63]:
 
-
-rootDir = args.rootDir
-print("rootDir: "+str(rootDir))
+dataDir = args.dataDir
+print("dataDir: "+str(dataDir))
 
 sampleName = args.sampleName
 print("sampleName: "+sampleName)
@@ -58,8 +65,6 @@ quantileRGB = args.quantileRGB
 print("quantileRGB: "+str(quantileRGB))
 
 
-# In[5]:
-
 
 def pil2cv(image):
     ''' PIL -> OpenCV '''
@@ -75,15 +80,11 @@ def pil2cv(image):
 
 # # Crop Image
 
-# In[6]:
 
-
-dirName = rootDir+"/"+sampleName
+dirName = dataDir+"/"+sampleName
 
 subprocess.call(['mkdir','-p',dirName+"/CropImage/size_"+str(extraSize)+"/spot_images"])
 
-
-# In[7]:
 
 
 ### load Image
@@ -94,8 +95,6 @@ I = pil2cv(I)
 
 print(I.shape)
 
-
-# In[8]:
 
 
 ## Transpose
@@ -114,14 +113,10 @@ I = cv2.imread(dirName+"/CropImage/size_"+str(extraSize)+"/transpose_image.tif")
 print(I.shape)
 
 
-# In[9]:
-
 
 # keep original image
 I_org = I.copy()
 
-
-# In[10]:
 
 
 ### load tissue_position
@@ -134,15 +129,11 @@ print("tissue_pos: "+str(tissue_pos.shape))
 print(tissue_pos.head())
 
 
-# In[11]:
-
 
 ## calc radius
 radius = math.ceil(radiusPixel * (1 + extraSize/100))
 print("radius: "+str(radius))
 
-
-# In[12]:
 
 
 ### draw line and text
@@ -156,14 +147,10 @@ for i in range(4992):
     I = cv2.putText(I, str(i), (pos_x1,pos_y1), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 0), lineType=cv2.LINE_AA, thickness=2)
 
 
-# In[13]:
-
 
 ### save Image
 cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/original_image_with_spots.tif", I)
 
-
-# In[14]:
 
 
 ### split Image
@@ -181,8 +168,6 @@ for i in range(4992):
 
 # # Make RGB filter list
 
-# In[15]:
-
 
 ### load cluster list ###
 cluster_list = pd.read_csv(dirName+"/SpaceRanger/analysis/clustering/graphclust/clusters.csv")
@@ -190,8 +175,6 @@ cluster_list = pd.read_csv(dirName+"/SpaceRanger/analysis/clustering/graphclust/
 print("cluster_list: "+str(cluster_list.shape))
 print(cluster_list.head())
 
-
-# In[16]:
 
 
 ### merge cluster file and tissue position file ###
@@ -208,15 +191,11 @@ print("cluster_pos_df: "+str(cluster_pos_df.shape))
 print(cluster_pos_df.head())
 
 
-# In[17]:
-
 
 ### mkdir
 subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/NG/"])
 subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/OK/"])
 
-
-# In[18]:
 
 
 ### count mean RGB values ###
@@ -235,16 +214,12 @@ for i in cluster_pos_df.index:
     mean_value_list.append(total_value)
 
 
-# In[19]:
-
 
 cluster_pos_df['mean_RGB'] = [round(f, 4) for f in mean_value_list]
 
 print("cluster_pos_df: "+str(cluster_pos_df.shape))
 print(cluster_pos_df.head())
 
-
-# In[20]:
 
 
 ## Define threshold
@@ -256,14 +231,10 @@ white_th = 255 if quantileRGB == 100 else c_array[0]
 print("white_th: "+str(white_th))
 
 
-# In[21]:
-
 
 with open(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/white_th.txt", mode='w') as f:
     f.write(str(white_th)+"\n")
 
-
-# In[22]:
 
 
 # Histgram
@@ -281,16 +252,12 @@ fig.savefig(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"
 plt.close()
 
 
-# In[23]:
-
 
 ### Threshold percentage ###
 pixel_th_white = I.shape[0] * I.shape[1] * 0.5
 
 print("pixel_th_white: "+str(pixel_th_white))
 
-
-# In[24]:
 
 
 ### load Image
@@ -311,23 +278,17 @@ for i in cluster_pos_df.index:
  
 
 
-# In[25]:
-
 
 cluster_pos_df.to_csv(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/cluster_position_filter.txt", index=False, sep='\t')
 
 
 # # Crop Image (interpolation)
 
-# In[26]:
-
 
 I = I_org.copy()
 
 subprocess.call(['mkdir','-p',dirName+"/CropImage/size_"+str(extraSize)+"/spot_images_inter"])
 
-
-# In[27]:
 
 
 ### draw line and text
@@ -341,9 +302,8 @@ for i in range(4992):
     I = cv2.putText(I, str(i), (pos_x1,pos_y1), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 0), lineType=cv2.LINE_AA, thickness=2)
 
 
-# In[28]:
 
-
+### draw line and text
 count_inter = 0
 
 for i in range(4992):
@@ -389,14 +349,10 @@ for i in range(4992):
     count_inter += 1
 
 
-# In[29]:
-
 
 ### save Image
 cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/original_image_with_spots_inter.tif", I)
 
-
-# In[33]:
 
 
 ### split Image
@@ -455,8 +411,6 @@ for i in range(4992):
 
 # # Make RGB filter list (interpolation)
 
-# In[34]:
-
 
 ### interpolated image list ###
 image_list['ImageFilter'] = "null"
@@ -466,15 +420,11 @@ print("image_list: "+str(image_list.shape))
 print(image_list.head())
 
 
-# In[35]:
-
 
 ### mkdir
 subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/NG_inter/"])
 subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/OK_inter/"])
 
-
-# In[36]:
 
 
 ### count mean RGB values ###
@@ -492,16 +442,12 @@ for i in image_list.index:
     mean_value_list.append(total_value)
 
 
-# In[37]:
-
 
 image_list['mean_RGB'] = [round(f, 4) for f in mean_value_list]
 
 print("image_list: "+str(image_list.shape))
 print(image_list.head())
 
-
-# In[38]:
 
 
 ## read RGB threshold
@@ -513,8 +459,6 @@ white_th
 
 print("white_th: "+str(white_th))
 
-
-# In[39]:
 
 
 # Histgram
@@ -532,16 +476,12 @@ fig.savefig(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"
 plt.close()
 
 
-# In[40]:
-
 
 ### Threshold percentage ###
 pixel_th_white = I.shape[0] * I.shape[1] * 0.5
 
 print("pixel_th_white: "+str(pixel_th_white))
 
-
-# In[60]:
 
 
 ### load Image
@@ -562,25 +502,13 @@ for i in image_list.index:
  
 
 
-# In[ ]:
-
-
-
-
-
-# In[42]:
-
 
 image_list.to_csv(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/image_list_inter.txt", index=False, sep='\t')
 
 
-# In[ ]:
 
 
 
-
-
-# In[ ]:
 
 
 

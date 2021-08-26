@@ -57,6 +57,18 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
     print("cluster_list: "+str(cluster_list.shape))
     print(cluster_list.head())
 
+    
+    print("### remove cluster ###")
+    cluster_list['have_cluster'] = [True if i != rm_cluster else False for i in cluster_list['Cluster']]
+
+    cluster_list['Cluster'] = [i if i != rm_cluster else -1 for i in cluster_list['Cluster']]
+    cluster_list['Cluster'] = [i if i < rm_cluster else i - 1 for i in cluster_list['Cluster']]
+
+    print("cluster_list: "+str(cluster_list.shape))
+    print(cluster_list.head())
+
+    print(cluster_list['Cluster'].unique())
+
 
     print("### load tissue_position_list.csv ###")
     tissue_pos = pd.DataFrame(columns=['Sample','Barcode','in_tissue','array_row','array_col','pxl_row_in_fullres','pxl_col_in_fullres','imageID'] )
@@ -109,10 +121,25 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
     print(exp_mat.head())
 
     
-    print("### Min-Max scaling ###")
-    for i in range(2,exp_mat.shape[1]):
-        exp_mat.iloc[:,i] = minmax_scale(exp_mat.iloc[:,i].tolist())
+#    print("### Min-Max scaling ###")
+#    for i in range(2,exp_mat.shape[1]):
+#        exp_mat.iloc[:,i] = minmax_scale(exp_mat.iloc[:,i].tolist())
 
+    print("### Min-Max scaling ###")
+    exp_mat_np = exp_mat.iloc[:,range(2,exp_mat.shape[1])].to_numpy()
+    
+    for i in range(exp_mat.shape[1]-2):
+        exp_mat_np[:,i] = minmax_scale(exp_mat_np[:,i].tolist())
+    
+    exp_mat_np = pd.DataFrame(exp_mat_np)
+    exp_mat_np = exp_mat_np.astype('float64')
+    exp_mat_np.columns = exp_mat.iloc[:,range(2,exp_mat.shape[1])].columns
+
+    exp_mat = pd.concat([exp_mat.iloc[:,0:2],exp_mat_np], axis=1)
+
+    print(exp_mat)
+
+        
     exp_mat['have_exp'] = True
         
     print("exp_mat: "+str(exp_mat.shape))
@@ -151,11 +178,6 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
     print(data_list_df.head())
 
 
-    ### Remove cluster ###
-    if rm_cluster != '':
-        print("### Remove cluster ###")
-        cluster_pos_df = cluster_pos_df.loc[~cluster_pos_df['Cluster'].isin(rm_cluster),:]
-
     
     ### 5-fold cross validation
     kf = KFold(n_splits=5, shuffle=True, random_state=seed)
@@ -179,9 +201,8 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
         data_list_df_train_index = data_list_df_train.query('have_exp != True').index
         data_list_df_train = data_list_df_train.drop(data_list_df_train_index)
 
-        ### Remove cluster ###
-        if rm_cluster != '':
-            data_list_df_train = data_list_df_train.loc[~data_list_df_train['Cluster'].isin(rm_cluster),:]
+        data_list_df_train_index = data_list_df_train.query('have_cluster != True').index
+        data_list_df_train = data_list_df_train.drop(data_list_df_train_index)
 
         if train_equals_test:
             data_list_df_test['phase'] = "test"
@@ -198,10 +219,9 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
             data_list_df_test_index = data_list_df_test.query('have_exp != True').index
             data_list_df_test = data_list_df_test.drop(data_list_df_test_index)
 
-            ### Remove cluster ###
-            if rm_cluster != '':
-                data_list_df_test = data_list_df_test.loc[~data_list_df_test['Cluster'].isin(rm_cluster),:]
-    
+            data_list_df_train_index = data_list_df_train.query('have_cluster != True').index
+            data_list_df_train = data_list_df_train.drop(data_list_df_train_index)
+
                 
         data_list_df = pd.concat([data_list_df_train, data_list_df_test])
     
@@ -215,11 +235,12 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
     return data_list_df
 
 
-# In[3]:
+# In[14]:
 
 
+### verification ###
 if __name__ == '__main__':
-    data_list_teacher = makeDataList(rootDir="/home/monjo/DeepSpaCE/data",
+    data_list_teacher = makeDataList(rootDir="/home/"+os.environ['USER']+"/DeepSpaCE/data",
                                      sampleNames=['Human_Breast_Cancer_Block_A_Section_1'],
                                      clusteringMethod="graphclust",
                                      extraSize=150,
@@ -229,16 +250,18 @@ if __name__ == '__main__':
                                      cross_index=0,
                                      train_equals_test=True,
                                      is_test=False,
-                                     rm_cluster=[1,2])
+                                     rm_cluster=8)
+    
     print("data_list_teacher: "+str(data_list_teacher.shape))
     data_list_teacher.head()
 
     data_list_teacher.to_csv("./temp.txt", index=False, sep='\t', float_format='%.6f')
 
-    
+    data_list_teacher_tmp = data_list_teacher.copy()
+    data_list_teacher = data_list_teacher_tmp.query('phase != "test"').copy()
+    data_list_test = data_list_teacher_tmp.query('phase == "test"').copy()
+    data_list_test['phase'] = 'valid'
 
-
-# In[ ]:
 
 
 
@@ -246,7 +269,7 @@ if __name__ == '__main__':
 
 # ## makeTrainDataloader
 
-# In[4]:
+# In[15]:
 
 
 def makeTrainDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, augmentation, batch_size, ClusterPredictionMode):
@@ -307,11 +330,12 @@ def makeTrainDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, aug
     return dataloaders_dict
 
 
-# In[5]:
+# In[16]:
 
 
+### verification ###
 if __name__ == '__main__':
-    dataloaders_dict = makeTrainDataloader(rootDir="/home/monjo/DeepSpaCE/out",
+    dataloaders_dict = makeTrainDataloader(rootDir="/home/"+os.environ['USER']+"/DeepSpaCE/out",
                                            data_list_df=data_list_teacher,
                                            geneSymbols=['MKI67', 'ESR1', 'ERBB2'],
                                            size=224,
@@ -322,31 +346,40 @@ if __name__ == '__main__':
                                            ClusterPredictionMode=False)
 
 
-# In[ ]:
-
 
 
 
 
 # # make network model
 
-# In[6]:
+# In[42]:
 
 
-def make_model(use_pretrained, num_features, full):
-    # load VGG16 model
+def make_model(use_pretrained, num_features, transfer, model):
+    
     print("use_pretrained: "+str(use_pretrained))
-    net = models.vgg16(pretrained=use_pretrained)
 
-    # change the last unit of VGG16
-    net.classifier[6] = nn.Linear(in_features=4096, out_features=num_features)
+    if model == "VGG16":
+        # load VGG16 model
+        net = torchvision.models.vgg16(pretrained=use_pretrained)
+
+        # change the last unit of VGG16
+        net.classifier[6] = nn.Linear(in_features=4096, out_features=num_features)
+
+    elif model == "DenseNet121":
+        # load DenseNet121 model
+        net = torchvision.models.densenet121(pretrained=use_pretrained)
+
+        # change the last unit of VGG16
+        net.classifier = nn.Linear(in_features=1024, out_features=num_features)
+
 
     # train mode
     net.train()
 
     params_to_update = []
 
-    if full:
+    if transfer == False:
         print("### Full learning ###")
         for name, param in net.named_parameters():
             param.requires_grad = True
@@ -354,6 +387,11 @@ def make_model(use_pretrained, num_features, full):
 
     else:
         print("### Transfer learning ###")
+        if model != "VGG16":
+            print("Transfer leraning is available only for VGG16")
+            sys.exit()
+        
+        
         # parameters for training
         update_param_names = ["classifier.6.weight", "classifier.6.bias"]
 
@@ -372,21 +410,17 @@ def make_model(use_pretrained, num_features, full):
     return net, params_to_update
 
 
-# In[7]:
+# In[44]:
 
 
+### verification ###
 if __name__ == '__main__':
     print("### make model ###")
     net, params_to_update = make_model(use_pretrained=True,
                                        num_features=3,
-                                       full=True)
+                                       transfer=False,
+                                       model="VGG16")
 
-#    net, params_to_update = make_model(use_pretrained=True,
-#                                       num_features=max(data_list_teacher['Cluster']),
-#                                       full=False)
-
-
-# In[ ]:
 
 
 
@@ -394,7 +428,7 @@ if __name__ == '__main__':
 
 # # loss function
 
-# In[8]:
+# In[19]:
 
 
 def loss_function(outputs, labels):
@@ -410,7 +444,7 @@ def loss_function(outputs, labels):
     return loss
 
 
-# In[9]:
+# In[20]:
 
 
 def calc_cor(outputs, labels):
@@ -431,18 +465,16 @@ def calc_cor(outputs, labels):
     return np.mean(corR)
 
 
-# In[ ]:
-
 
 
 
 
 # ## train_model
 
-# In[10]:
+# In[21]:
 
 
-def run_train(net, dataloaders_dict, optimizer, num_epochs, device, early_stop_max, name, ClusterPredictionMode):
+def run_train(outDir, net, dataloaders_dict, optimizer, num_epochs, device, early_stop_max, name, ClusterPredictionMode):
 
     ### set multi GPU
     if str(device) != 'cpu':
@@ -539,7 +571,7 @@ def run_train(net, dataloaders_dict, optimizer, num_epochs, device, early_stop_m
         res_df = res_df.append([pd.Series([train_loss,valid_loss,train_acc_or_cor,valid_acc_or_cor],index=res_df.columns)], ignore_index=True)
         
         ### save training_loss.txt
-        res_df.to_csv("../out/training_loss_"+name+".txt", sep='\t', float_format='%.6f')
+        res_df.to_csv(outDir+"/training_loss_"+name+".txt", sep='\t', float_format='%.6f')
 
         ### save best model
         save_best = False
@@ -555,13 +587,13 @@ def run_train(net, dataloaders_dict, optimizer, num_epochs, device, early_stop_m
 
         if save_best:
             if str(device) != 'cpu' and torch.cuda.device_count() > 1:
-                subprocess.call(['rm','-r','../out/model_'+name+'/'])
-                subprocess.call(['mkdir','../out/model_'+name+'/'])
-                torch.save(net.module.state_dict(), "../out/model_"+name+"/model_"+str(epoch)+".pth")
+                subprocess.call(['rm','-r',outDir+'/model_'+name+'/'])
+                subprocess.call(['mkdir',outDir+'/model_'+name+'/'])
+                torch.save(net.module.state_dict(), outDir+"/model_"+name+"/model_"+str(epoch)+".pth")
             else:
-                subprocess.call(['rm','-r','../out/model_'+name+'/'])
-                subprocess.call(['mkdir','../out/model_'+name+'/'])
-                torch.save(net.state_dict(), "../out/model_"+name+"/model_"+str(epoch)+".pth")
+                subprocess.call(['rm','-r',outDir+'/model_'+name+'/'])
+                subprocess.call(['mkdir',outDir+'/model_'+name+'/'])
+                torch.save(net.state_dict(), outDir+"/model_"+name+"/model_"+str(epoch)+".pth")
 
         ### early stopping
         if valid_loss_prev > valid_loss:
@@ -582,17 +614,19 @@ def run_train(net, dataloaders_dict, optimizer, num_epochs, device, early_stop_m
         ### append loss to DataFrame
         time_df = time_df.append([pd.Series([elapsed_time],index=time_df.columns)], ignore_index=True)
         ### save training_loss.txt
-        time_df.to_csv("../out/time_"+name+".txt", sep='\t', float_format='%.6f')
+        time_df.to_csv(outDir+"/time_"+name+".txt", sep='\t', float_format='%.6f')
 
 
-# In[11]:
+# In[22]:
 
 
+### verification ###
 if __name__ == '__main__':
     optimizer = optim.Adam(params=params_to_update, lr=1e-4, weight_decay=1e-4)
     
     print("### run train ###")
-    run_train(net=net,
+    run_train(outDir="/home/"+os.environ['USER']+"/DeepSpaCE/",
+              net=net,
               dataloaders_dict=dataloaders_dict,
               optimizer=optimizer,
               num_epochs=3,
@@ -602,18 +636,16 @@ if __name__ == '__main__':
               ClusterPredictionMode=False)
 
 
-# In[ ]:
-
 
 
 
 
 # # Validation (Test set)
 
-# In[12]:
+# In[25]:
 
 
-def makeTestDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, augmentation, batch_size, ClusterPredictionMode):
+def makeTestDataloader(rootDir, data_list_df, model, geneSymbols, size, mean, std, augmentation, batch_size, ClusterPredictionMode):
     
     data_list_df = data_list_df.reset_index(drop=True)
     
@@ -638,7 +670,7 @@ def makeTestDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, augm
 
     
     print("### make DataLoader ###")
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=os.cpu_count(), pin_memory=True)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=1, pin_memory=False)
 
     print("### make dictionary ###")
     dataloaders_dict_test = {"valid": test_dataloader}
@@ -653,27 +685,29 @@ def makeTestDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, augm
     return dataloaders_dict_test
 
 
-# In[13]:
+# In[32]:
 
 
+### verification ###
 if __name__ == '__main__':
-    dataloaders_dict_test = makeTestDataloader(rootDir="/home/monjo/Visium/",
+    dataloaders_dict_test = makeTestDataloader(rootDir="/home/"+os.environ['USER']+"/DeepSpaCE/",
                                                data_list_df=data_list_test,
+                                               model="VGG16",
                                                geneSymbols=['MKI67', 'ESR1', 'ERBB2'],
                                                size=224,
                                                mean=(0.485, 0.456, 0.406),
                                                std=(0.229, 0.224, 0.225),
                                                augmentation="none",
                                                batch_size=128,
-                                               ClusterPredictionMode=True)
+                                               ClusterPredictionMode=False)
 
 
-# In[ ]:
+# In[33]:
 
 
-def run_test(data_list_df, dataloaders_dict, geneSymbols, device, name, ClusterPredictionMode, rm_cluster):
+def run_test(outDir, data_list_df, dataloaders_dict, model, device, geneSymbols, num_features, ClusterPredictionMode, name):
     print("### load loss_acc_df ###")
-    loss_acc_df = pd.read_csv("../out/training_loss_"+name+".txt", sep='\t')
+    loss_acc_df = pd.read_csv(outDir+"/training_loss_"+name+".txt", sep='\t')
 
     loss_acc_df = loss_acc_df.rename(columns={'Unnamed: 0':'no'})
 
@@ -682,14 +716,14 @@ def run_test(data_list_df, dataloaders_dict, geneSymbols, device, name, ClusterP
 
     
     print("### Best model ###")
-    best_files = glob.glob("../out/model_"+name+"/model_*")
+    best_files = glob.glob(outDir+"/model_"+name+"/model_*")
 
     print(best_files)
     best_model = best_files[0]
         
     print("best_model: "+str(best_model))
 
-    with open("../out/best_model_"+name+".txt", mode='w') as f:
+    with open(outDir+"/best_model_"+name+".txt", mode='w') as f:
         f.write(str(best_model))
         
         
@@ -707,12 +741,14 @@ def run_test(data_list_df, dataloaders_dict, geneSymbols, device, name, ClusterP
     
     if ClusterPredictionMode:
         net, params_to_update = make_model(use_pretrained=False,
-                                           num_features=len(data_list_df['Cluster'].unique()) - len(rm_cluster),
-                                           full=False)
+                                           num_features=num_features,
+                                           transfer=False,
+                                           model=model)
     else:
         net, params_to_update = make_model(use_pretrained=False,
                                            num_features=len(geneSymbols),
-                                           full=False)
+                                           transfer=False,
+                                           model=model)
 
     print("### load the best model ###")
     if str(device) != 'cpu':
@@ -771,21 +807,18 @@ def run_test(data_list_df, dataloaders_dict, geneSymbols, device, name, ClusterP
         data_list_df['Cluster_pred'] = [int(i)+1 for i in valid_preds.tolist()]        
   
         print("### Plot confusion matrix ###")
-       
-        idx = [int(i+1) not in rm_cluster for i in valid_labels]
+        idx = [int(i+1) != -1 for i in valid_labels]
         valid_labels = list(itertools.compress(valid_labels, idx))
         valid_preds = list(itertools.compress(valid_preds, idx))
         
-        print("rm_cluster: "+str(rm_cluster))
         print("valid_labels: "+str(valid_labels))
         print("valid_preds: "+str(valid_preds))
-        print(["Cluster_"+str(i+1) for i in range(max(data_list_df['Cluster'])) if int(i+1) not in rm_cluster])
-
+        print(["Cluster"+str(i+1) for i in range(num_features)])
         
-        plot_conf_matrix(valid_labels, valid_preds, ["Cluster_"+str(i+1) for i in range(max(data_list_df['Cluster'])) if int(i+1) not in rm_cluster], name)
+        plot_conf_matrix(valid_labels, valid_preds, ["Cluster"+str(i+1) for i in range(num_features)], name)
 
         print("### make classification_report ###")
-        make_classification_report(valid_labels, valid_preds, ["Cluster_"+str(i+1) for i in range(max(data_list_df['Cluster'])) if int(i+1) not in rm_cluster], name)
+        make_classification_report(valid_labels, valid_preds, ["Cluster"+str(i+1) for i in range(num_features)], name)
 
     else:
         print("### plot_correlation_scatter_hist ###")
@@ -794,30 +827,30 @@ def run_test(data_list_df, dataloaders_dict, geneSymbols, device, name, ClusterP
     return data_list_df, net
 
 
-# In[ ]:
 
 
 
 
+# In[34]:
 
-# In[ ]:
 
-
+### verification ###
 if __name__ == '__main__':
-    data_list_df, net = run_test(data_list_df=data_list_test,
+    data_list_df, net = run_test(outDir="/home/"+os.environ['USER']+"/DeepSpaCE/",
+                                 data_list_df=data_list_test,
                                  dataloaders_dict=dataloaders_dict_test,
-                                 geneSymbols=["COL1A1"],
+                                 model="VGG16",
                                  device="cpu",
-                                 name="teacher",
-                                 ClusterPredictionMode=False)
+                                 geneSymbols=['MKI67', 'ESR1', 'ERBB2'],
+                                 num_features=3,
+                                 ClusterPredictionMode=False,
+                                 name="teacher")
     
     print("data_list_df: "+str(data_list_df.shape))
     data_list_df.head()
 
 
 # ## Semi-supervised
-
-# In[ ]:
 
 
 def makeDataListSemi(rootDir, sampleNames, semiType, ImageSet, semiName):
@@ -826,7 +859,7 @@ def makeDataListSemi(rootDir, sampleNames, semiType, ImageSet, semiName):
     if semiType == "Visium":
         for sampleName in sampleNames:
             for i_imageSet in ImageSet:
-                image_l = pd.read_csv(rootDir+semiType+"/ImageSet/out/"+sampleName+"/ImageSet_"+str(i_imageSet)+"/image_list.txt", sep='\t')
+                image_l = pd.read_csv(rootDir+"/"+semiType+"/ImageSet/out/"+sampleName+"/ImageSet_"+str(i_imageSet)+"/image_list.txt", sep='\t')
                 image_list = image_list.append(image_l, ignore_index=True)
         
         idx_rnd = random.sample(image_list.index.tolist(), 2000*len(ImageSet))
@@ -834,7 +867,7 @@ def makeDataListSemi(rootDir, sampleNames, semiType, ImageSet, semiName):
 
     else:
         for i_imageSet in ImageSet:
-            image_l = pd.read_csv(rootDir+semiType+"/ImageSet/out/ImageSet_"+str(i_imageSet)+"/image_list.txt", sep='\t')
+            image_l = pd.read_csv(rootDir+"/"+semiType+"/ImageSet/out/ImageSet_"+str(i_imageSet)+"/image_list.txt", sep='\t')
             image_list = image_list.append(image_l, ignore_index=True)
 
     ## ABCI ##
@@ -858,12 +891,11 @@ def makeDataListSemi(rootDir, sampleNames, semiType, ImageSet, semiName):
     return image_list
 
 
-# In[ ]:
 
-
+### verification ###
 if __name__ == '__main__':
-    data_list_semi = makeDataListSemi(rootDir="/home/monjo/Visium/",
-                                      sampleNames=['Case14_A','Case14_B','Case14_C'],
+    data_list_semi = makeDataListSemi(rootDir="/home/"+os.environ['USER']+"/DeepSpaCE/",
+                                      sampleNames=['Human_Breast_Cancer_Block_A_Section_1','Human_Breast_Cancer_Block_A_Section_2'],
                                       semiType="Visium",
                                       ImageSet=['0','1'],
                                       semiName="semi")
@@ -873,8 +905,6 @@ if __name__ == '__main__':
     print(data_list_semi.shape)
     print(data_list_semi)
 
-
-# In[ ]:
 
 
 def makeSemiDataloader(rootDir, data_list_df, size, mean, std, augmentation, batch_size):
@@ -895,7 +925,7 @@ def makeSemiDataloader(rootDir, data_list_df, size, mean, std, augmentation, bat
 
     
     print("### make DataLoader ###")
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=os.cpu_count(), pin_memory=True)
+    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=1, pin_memory=False)
 
     print("### make dictionary ###")
     dataloaders_dict_test = {"valid": test_dataloader}
@@ -909,11 +939,10 @@ def makeSemiDataloader(rootDir, data_list_df, size, mean, std, augmentation, bat
     return dataloaders_dict_test
 
 
-# In[ ]:
 
-
+### verification ###
 if __name__ == '__main__':
-    dataloaders_dict_semi = makeSemiDataloader(rootDir="/home/monjo/Visium/",
+    dataloaders_dict_semi = makeSemiDataloader(rootDir="/home/"+os.environ['USER']+"/Visium/",
                                                data_list_df=data_list_semi,
                                                size=224,
                                                mean=(0.485, 0.456, 0.406),
@@ -921,8 +950,6 @@ if __name__ == '__main__':
                                                augmentation="none",
                                                batch_size=128)
 
-
-# In[ ]:
 
 
 def predict_semi_label(net, data_list_semi, dataloaders_dict_semi, geneSymbols, ClusterPredictionMode):
@@ -984,9 +1011,8 @@ def predict_semi_label(net, data_list_semi, dataloaders_dict_semi, geneSymbols, 
     return data_list_semi
 
 
-# In[ ]:
 
-
+### verification ###
 if __name__ == '__main__':
     data_list_semi = predict_semi_label(net=net,
                                         data_list_semi=data_list_semi,
@@ -995,13 +1021,9 @@ if __name__ == '__main__':
                                         ClusterPredictionMode=True)
 
 
-# In[ ]:
 
 
 
-
-
-# In[ ]:
 
 
 

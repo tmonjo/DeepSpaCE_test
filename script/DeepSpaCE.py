@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
+# In[1]:
 
 
 import glob
@@ -21,10 +21,9 @@ from PIL import Image
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import matplotlib
-#%matplotlib inline
 matplotlib.use('Agg')
 
-from matplotlib.ticker import MaxNLocator 
+from matplotlib.ticker import MaxNLocator
 
 import torch
 import torch.nn as nn
@@ -50,8 +49,6 @@ import cv2
 import albumentations as albu
 from albumentations.pytorch import ToTensor
 
-#subprocess.call(['cp','-rp','/home/monjo/Visium/PredictGene/script/BasicLib.py','.'])
-#subprocess.call(['cp','-rp','/home/monjo/Visium/PredictGene/script/DeepSpaceLib.py','.'])
 sys.path.append('./')
 
 from DeepSpaceLib import makeDataList
@@ -65,67 +62,109 @@ from DeepSpaceLib import makeSemiDataloader
 from DeepSpaceLib import predict_semi_label
 
 
-# In[ ]:
+# In[40]:
 
 
+argrequired = False
 
 
+# In[41]:
 
-# In[71]:
 
+parser = argparse.ArgumentParser(description='DeepSpaCE')
 
-parser = argparse.ArgumentParser(description='Predict Gene')
-parser.add_argument('--rootDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/')
-parser.add_argument('--dataDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/data')
-parser.add_argument('--batch_size', type=int, default=128,
-                    help='input batch size for training (default: 128)')
-parser.add_argument('--num_epochs', type=int, default=10,
-                    help='number of epochs to train (default: 100')
-parser.add_argument('--lr', type=float, default=1e-4,
-                    help='learning rate (default: 1e-4)')
-parser.add_argument('--weight_decay', type=float, default=1e-4,
-                    help='weight decay (default: 1e-4)')
-parser.add_argument('--model', type=str, choices=['vgg16'], default='vgg16',
-                    help='vgg16')
-parser.add_argument('--clusteringMethod', type=str, choices=['graphclust', 'kmeans_2_clusters', 'kmeans_3_clusters', 'kmeans_4_clusters', 'kmeans_5_clusters', 'kmeans_6_clusters', 'kmeans_7_clusters','kmeans_8_clusters', 'kmeans_9_clusters', 'kmeans_10_clusters'], default='graphclust')
-parser.add_argument('--rm_cluster', type=str, default='')
+parser.add_argument('--dataDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/data', required=argrequired,
+                    help='Data directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/data'+')')
+
+parser.add_argument('--outDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/',
+                    help='Root directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/'+')')
+
+parser.add_argument('--sampleNames_train', type=str, default='Human_Breast_Cancer_Block_A_Section_1',
+                    help='Sample names to train (default: Human_Breast_Cancer_Block_A_Section_1)')
+
+parser.add_argument('--sampleNames_test', type=str, default='Human_Breast_Cancer_Block_A_Section_1',
+                    help='Sample names to test (default: Human_Breast_Cancer_Block_A_Section_1)')
+
+parser.add_argument('--sampleNames_semi', type=str, default='None',
+                    help='Sample names to semi-supervised learning (default: None)')
+
+parser.add_argument('--semi_option', type=str, choices=['normal', 'random', 'permutation'], default='normal',
+                    help='Option of semi-supervised learning (default: normal)')
+
+parser.add_argument('--seed', type=int, default=0,
+                    help='Random seed (default: 0)')
+
+parser.add_argument('--threads', type=int, default=8,
+                    help='Number of CPU threads (default: 8)')
+
+parser.add_argument('--GPUs', type=int, default=1,
+                    help='Number of GPUs (default: 1)')
+
 parser.add_argument('--cuda', action='store_true',
-                    help='enables CUDA training')
-parser.add_argument('--full', action='store_true',
-                    help='enables full training')
-parser.add_argument('--quantileRGB', type=int, default=80)
-parser.add_argument('--seed', type=int, default=0)
-parser.add_argument('--threads', type=int, default=8)
-parser.add_argument('--GPUs', type=int, default=1)
+                    help='Enables CUDA training')
+
+parser.add_argument('--transfer', action='store_true',
+                    help='Enables transfer training')
+
+parser.add_argument('--model', type=str, choices=['VGG16','DenseNet121'], default='DenseNet121',
+                    help='Deep learning model')
+
+parser.add_argument('--batch_size', type=int, default=128,
+                    help='Input batch size for training (default: 128)')
+
+parser.add_argument('--num_epochs', type=int, default=10,
+                    help='Number of epochs to train (default: 100)')
+
+parser.add_argument('--lr', type=float, default=1e-4,
+                    help='Learning rate (default: 1e-4)')
+
+parser.add_argument('--weight_decay', type=float, default=1e-4,
+                    help='Weight decay (default: 1e-4)')
+
+parser.add_argument('--clusteringMethod', type=str, choices=['graphclust', 'kmeans_2_clusters', 'kmeans_3_clusters', 'kmeans_4_clusters', 'kmeans_5_clusters', 'kmeans_6_clusters', 'kmeans_7_clusters','kmeans_8_clusters', 'kmeans_9_clusters', 'kmeans_10_clusters'], default='graphclust',
+                    help='Clustering method (default: graphclust)')
+
+parser.add_argument('--extraSize', type=int, default=150,
+                    help='Extra image size (default: 150)')
+
+parser.add_argument('--quantileRGB', type=int, default=80,
+                    help='Threshold of quantile RGB (default: 80)')
+
+parser.add_argument('--augmentation', type=str, default='flip,crop,color,random',
+                    help='Image augmentation methods (default: flip,crop,color,random)')
+
 parser.add_argument('--early_stop_max', type=int, default=5,
-                    help='how many epochs to wait for loss improvement (default: 5)')
-parser.add_argument('--extraSize', type=int, default=150)
-parser.add_argument('--sampleNames_train', type=str, default='Human_Breast_Cancer_Block_A_Section_1')
-parser.add_argument('--sampleNames_test', type=str, default='Human_Breast_Cancer_Block_A_Section_1')
-parser.add_argument('--sampleNames_semi', type=str, default='None')
-parser.add_argument('--semi_option', type=str, choices=['normal', 'random', 'permutation'], default='normal')
-parser.add_argument('--geneSymbols', type=str, default='SPARC,IFI27,COL10A1,COL1A2,COL3A1,COL5A2,FN1,POSTN,CTHRC1,COL1A1,THBS2,PDGFRL,COL8A1,SULF1,MMP14,ISG15,IL32,MXRA5,LUM,DPYSL3,CTSK')
-parser.add_argument('--augmentation', type=str, default='flip,crop,color,random')
-parser.add_argument('--cross_index', type=int, default=0)
-parser.add_argument('--ClusterPredictionMode', action='store_true')
+                    help='How many epochs to wait for loss improvement (default: 5)')
+
+parser.add_argument('--rm_cluster', type=str, default='8',
+                    help='Remove cluster name (default: None)')
+
+parser.add_argument('--ClusterPredictionMode', action='store_true',
+                    help='Enables ClusterPredictionMode')
+
+parser.add_argument('--cross_index', type=int, default=0,
+                    help='Index of 5-fold cross-validation (default: 0)')
+
+parser.add_argument('--geneSymbols', type=str, default='ESR1,ERBB2,MKI67',
+                    help='Gene symbols (default: ESR1,ERBB2,MKI67)')
 
 args = parser.parse_args()
 
 
-# In[72]:
+# In[39]:
 
 
 print(args)
 
 
-# In[73]:
+# In[4]:
 
-
-rootDir = args.rootDir
-print("rootDir: "+str(rootDir))
 
 dataDir = args.dataDir
 print("dataDir: "+str(dataDir))
+
+outDir = args.outDir
+print("outDir: "+str(outDir))
 
 batch_size = args.batch_size * args.GPUs
 print("batch_size: "+str(batch_size))
@@ -148,9 +187,8 @@ print("clusteringMethod: "+str(clusteringMethod))
 cuda = args.cuda and torch.cuda.is_available()
 print("cuda: "+str(cuda))
 
-full = args.full
-full = True
-print("full: "+str(full))
+transfer = args.transfer
+print("transfer: "+str(transfer))
 
 quantileRGB = args.quantileRGB
 print("quantileRGB: "+str(quantileRGB))
@@ -180,32 +218,32 @@ ClusterPredictionMode = args.ClusterPredictionMode
 print("ClusterPredictionMode: "+str(ClusterPredictionMode))
 
 
-# In[74]:
+# In[5]:
 
 
-if args.rm_cluster == '':
-    rm_cluster = ''
+if args.rm_cluster == 'None':
+    rm_cluster = -1
 else:
-    rm_cluster = [int(i) for i in args.rm_cluster.split(',')]
+    rm_cluster = int(args.rm_cluster)
 
 print("rm_cluster: "+str(rm_cluster))
 
 
-# In[48]:
+# In[6]:
 
 
 sampleNames_train = args.sampleNames_train.split(',')
 print("sampleNames_train: "+str(sampleNames_train))
 
 
-# In[49]:
+# In[7]:
 
 
 sampleNames_test = args.sampleNames_test.split(',')
 print("sampleNames_test: "+str(sampleNames_test))
 
 
-# In[50]:
+# In[8]:
 
 
 if sampleNames_train == sampleNames_test:
@@ -216,21 +254,21 @@ else:
 print("train_equals_test: "+str(train_equals_test))
 
 
-# In[51]:
+# In[9]:
 
 
 sampleNames_semi = args.sampleNames_semi.split(',')
 print("sampleNames_semi: "+str(sampleNames_semi))
 
 
-# In[52]:
+# In[10]:
 
 
 geneSymbols = args.geneSymbols.split(',')
 print(geneSymbols)
 
 
-# In[53]:
+# In[11]:
 
 
 size = 224
@@ -243,7 +281,7 @@ std = (0.229, 0.224, 0.225)
 print("std: "+str(std))
 
 
-# In[54]:
+# In[12]:
 
 
 print("### Set seeds ###")
@@ -254,14 +292,14 @@ random.seed(seed)
 torch.set_num_threads(threads)
 
 
-# In[55]:
+# In[13]:
 
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-# In[56]:
+# In[14]:
 
 
 print("### Check GPU availability ###")
@@ -271,7 +309,7 @@ print("device: ", device)
 
 # # make data_list (teacher)
 
-# In[57]:
+# In[15]:
 
 
 data_list_teacher = makeDataList(rootDir=dataDir,
@@ -291,7 +329,7 @@ if train_equals_test:
     data_list_teacher = data_list_teacher_tmp.query('phase != "test"').copy()
 
 
-data_list_teacher.to_csv("../out/data_list_teacher.txt", index=False, sep='\t', float_format='%.6f')
+data_list_teacher.to_csv(outDir+"/data_list_teacher.txt", index=False, sep='\t', float_format='%.6f')
 
 print("data_list_teacher: "+str(data_list_teacher.shape))
 data_list_teacher.head()
@@ -299,10 +337,10 @@ data_list_teacher.head()
 
 # # make dataloader (teacher)
 
-# In[58]:
+# In[16]:
 
 
-dataloaders_dict_teacher = makeTrainDataloader(rootDir=rootDir,
+dataloaders_dict_teacher = makeTrainDataloader(rootDir=dataDir,
                                                data_list_df=data_list_teacher,
                                                geneSymbols=geneSymbols,
                                                size=size,
@@ -313,11 +351,9 @@ dataloaders_dict_teacher = makeTrainDataloader(rootDir=rootDir,
                                                ClusterPredictionMode=ClusterPredictionMode)
 
 print("### save dataloader ###")
-with open("../out/dataloaders_dict_teacher.pickle", mode='wb') as f:
+with open(outDir+"/dataloaders_dict_teacher.pickle", mode='wb') as f:
     pickle.dump(dataloaders_dict_teacher, f)
 
-
-# In[ ]:
 
 
 
@@ -325,30 +361,30 @@ with open("../out/dataloaders_dict_teacher.pickle", mode='wb') as f:
 
 # # make network model (teacher)
 
-# In[59]:
+# In[17]:
 
 
 print("### make model ###")
 if ClusterPredictionMode:
     net, params_to_update = make_model(use_pretrained=True,
                                        num_features=len(data_list_teacher['Cluster'].unique()),
-                                       full=full)
+                                       transfer=transfer,
+                                       model=model)
 else:
     net, params_to_update = make_model(use_pretrained=True,
                                        num_features=len(geneSymbols),
-                                       full=full)
+                                       transfer=transfer,
+                                       model=model)
 
 
 # # set optimizer
 
-# In[60]:
+# In[18]:
 
 
 print("### set optimizer ###")
 optimizer = optim.Adam(params=params_to_update, lr=lr, weight_decay=weight_decay)
 
-
-# In[ ]:
 
 
 
@@ -356,11 +392,12 @@ optimizer = optim.Adam(params=params_to_update, lr=lr, weight_decay=weight_decay
 
 # # Training (teacher)
 
-# In[61]:
+# In[19]:
 
 
 print("### run train ###")
-run_train(net=net,
+run_train(outDir=outDir,
+          net=net,
           dataloaders_dict=dataloaders_dict_teacher,
           optimizer=optimizer,
           num_epochs=num_epochs,
@@ -370,15 +407,13 @@ run_train(net=net,
           ClusterPredictionMode=ClusterPredictionMode)
 
 
-# In[ ]:
-
 
 
 
 
 # # Test (teacher)
 
-# In[65]:
+# In[22]:
 
 
 data_list_test = makeDataList(rootDir=dataDir,
@@ -398,17 +433,18 @@ if train_equals_test:
 
 
 data_list_test['phase'] = 'valid'
-data_list_test.to_csv("../out/data_list_test.txt", index=False, sep='\t', float_format='%.6f')
+data_list_test.to_csv(outDir+"/data_list_test.txt", index=False, sep='\t', float_format='%.6f')
 
 print("data_list_test: "+str(data_list_test.shape))
 data_list_test.head()
 
 
-# In[66]:
+# In[24]:
 
 
-dataloaders_dict_test = makeTestDataloader(rootDir=rootDir,
+dataloaders_dict_test = makeTestDataloader(rootDir=dataDir,
                                            data_list_df=data_list_test,
+                                           model=model,
                                            geneSymbols=geneSymbols,
                                            size=size,
                                            mean=mean,
@@ -418,23 +454,25 @@ dataloaders_dict_test = makeTestDataloader(rootDir=rootDir,
                                            ClusterPredictionMode=ClusterPredictionMode)
 
 # save dataloader
-with open("../out/DataLoader_test.pickle", mode='wb') as f:
+with open(outDir+"/DataLoader_test.pickle", mode='wb') as f:
     pickle.dump(dataloaders_dict_test, f)
 
 
-# In[67]:
+# In[28]:
 
 
 ### Test ###
-data_list_test_teacher, net_best = run_test(data_list_df=data_list_test,
+data_list_test_teacher, net_best = run_test(outDir=outDir,
+                                            data_list_df=data_list_test,
                                             dataloaders_dict=dataloaders_dict_test,
-                                            geneSymbols=geneSymbols,
+                                            model=model,
                                             device=device,
-                                            name="teacher",
+                                            geneSymbols=geneSymbols,
+                                            num_features=len(data_list_teacher['Cluster'].unique()),
                                             ClusterPredictionMode=ClusterPredictionMode,
-                                            rm_cluster=rm_cluster)
+                                            name="teacher")
 
-data_list_test_teacher.to_csv("../out/data_list_test_teacher.txt", index=False, sep='\t', float_format='%.6f')
+data_list_test_teacher.to_csv(outDir+"/data_list_test_teacher.txt", index=False, sep='\t', float_format='%.6f')
 
 print("data_list_test_teacher: "+str(data_list_test_teacher.shape))
 data_list_test_teacher.head()
@@ -442,7 +480,7 @@ data_list_test_teacher.head()
 
 # # Semi-supervised
 
-# In[ ]:
+# In[29]:
 
 
 if sampleNames_semi == ["None"]:
@@ -451,44 +489,40 @@ else:
     print("### Semi-supervised ###")
 
 
-# In[ ]:
+# In[30]:
 
 
 ImageSet = [[0,1],[2,3],[4,5],[6,7],[8,9]]
 print("ImageSet: "+str(ImageSet))
 
 
-# In[ ]:
 
 
 
-
-
-# In[ ]:
 
 
 for i_semi in range(5):
     if sampleNames_semi == ["TCGA"]:
-        data_list_semi = makeDataListSemi(rootDir=rootDir,
+        data_list_semi = makeDataListSemi(rootDir=dataDir,
                                           sampleNames=sampleNames_semi,
                                           semiType="TCGA",
                                           ImageSet=ImageSet[i_semi],
                                           semiName="semi"+str(i_semi+1))
     elif sampleNames_semi == ["ImageNet"]:
-        data_list_semi = makeDataListSemi(rootDir=rootDir,
+        data_list_semi = makeDataListSemi(rootDir=dataDir,
                                           sampleNames=sampleNames_semi,
                                           semiType="ImageNet",
                                           ImageSet=ImageSet[i_semi],
                                           semiName="semi"+str(i_semi+1))
     else:
-        data_list_semi = makeDataListSemi(rootDir=rootDir,
+        data_list_semi = makeDataListSemi(rootDir=dataDir,
                                           sampleNames=sampleNames_semi,
                                           semiType="Visium",
                                           ImageSet=ImageSet[i_semi],
                                           semiName="semi"+str(i_semi+1))
 
     # make semi dictionary
-    dataloaders_dict_semi = makeSemiDataloader(rootDir=rootDir,
+    dataloaders_dict_semi = makeSemiDataloader(rootDir=dataDir,
                                                data_list_df=data_list_semi,
                                                size=size,
                                                mean=mean,
@@ -560,7 +594,7 @@ for i_semi in range(5):
     data_list_student.head()
 
     
-    dataloaders_dict_student = makeTrainDataloader(rootDir=rootDir,
+    dataloaders_dict_student = makeTrainDataloader(rootDir=dataDir,
                                                    data_list_df=data_list_student,
                                                    geneSymbols=geneSymbols,
                                                    size=size,
@@ -579,11 +613,13 @@ for i_semi in range(5):
     if ClusterPredictionMode:
         net, params_to_update = make_model(use_pretrained=True,
                                            num_features=len(data_list_teacher['Cluster'].unique()),
-                                           full=full)
+                                           transfer=transfer,
+                                           model=model)
     else:
         net, params_to_update = make_model(use_pretrained=True,
                                            num_features=len(geneSymbols),
-                                           full=full)
+                                           transfer=transfer,
+                                           model=model)
     
     print("### set optimizer ###")
     optimizer = optim.Adam(params=params_to_update, lr=lr, weight_decay=weight_decay)
@@ -591,7 +627,8 @@ for i_semi in range(5):
     
     ### Training ###
     print("### run train ###")
-    run_train(net=net,
+    run_train(outDir=outDir,
+              net=net,
               dataloaders_dict=dataloaders_dict_student,
               optimizer=optimizer,
               num_epochs=num_epochs,
@@ -602,7 +639,8 @@ for i_semi in range(5):
 
     
     ### validation ###
-    data_list_test_student, net_best = run_test(data_list_df=data_list_test,
+    data_list_test_student, net_best = run_test(outDir=outDir,
+                                                data_list_df=data_list_test,
                                                 dataloaders_dict=dataloaders_dict_test,
                                                 geneSymbols=geneSymbols,
                                                 device=device,
@@ -616,25 +654,17 @@ for i_semi in range(5):
     data_list_test_student.head() 
 
 
-# In[ ]:
 
 
 
 
 
-# In[ ]:
 
 
 
 
 
-# In[ ]:
 
-
-
-
-
-# In[ ]:
 
 
 

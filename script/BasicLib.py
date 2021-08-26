@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
 
 import numpy as np
 import pandas as pd
@@ -27,8 +25,6 @@ import cv2
 
 import torch
 
-
-# In[ ]:
 
 
 class ImageTransform():
@@ -125,8 +121,6 @@ class ImageTransform():
         return img['image']
 
 
-# In[ ]:
-
 
 class SpotImageDataset(data.Dataset):
     def __init__(self, file_list, label_df, transform=None, phase='train', param=''):
@@ -153,13 +147,9 @@ class SpotImageDataset(data.Dataset):
         return img_transformed, torch.tensor(label)
 
 
-# In[ ]:
 
 
 
-
-
-# In[ ]:
 
 
 # Plot Loss
@@ -185,8 +175,6 @@ def plot_loss(loss_acc_df, name):
     plt.close()
 
 
-# In[ ]:
-
 
 # Plot Acc
 def plot_acc(loss_acc_df, name):
@@ -208,8 +196,6 @@ def plot_acc(loss_acc_df, name):
 
     plt.close()
 
-
-# In[1]:
 
 
 ### Plot confusion matrix ###
@@ -242,8 +228,6 @@ def plot_conf_matrix(valid_labels, valid_preds, class_names, name):
     plt.close()
 
 
-# In[2]:
-
 
 ### make classification_report ###
 def make_classification_report(valid_labels, valid_preds, class_names, name):
@@ -259,8 +243,6 @@ def make_classification_report(valid_labels, valid_preds, class_names, name):
 
     report_df
 
-
-# In[3]:
 
 
 def plot_correlation_scatter_hist(valid_labels, valid_preds, geneSymbols, scatter, name):
@@ -329,8 +311,6 @@ def plot_correlation_scatter_hist(valid_labels, valid_preds, geneSymbols, scatte
     plt.close()
 
 
-# In[4]:
-
 
 ### ROC curve, AUC
 def ROC_AUC(valid_labels, valid_preds_soft, name):
@@ -354,8 +334,6 @@ def ROC_AUC(valid_labels, valid_preds_soft, name):
     plt.savefig("../out/roc_curve_"+name+".png")
     plt.close()
 
-
-# In[ ]:
 
 
 
