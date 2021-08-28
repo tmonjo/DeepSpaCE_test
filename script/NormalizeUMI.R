@@ -1,19 +1,18 @@
 rm(list=ls())
-#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 options(stringsAsFactors=F)
 
-library(Seurat)
-library(ggplot2)
-library(patchwork)
-library(dplyr)
-library(data.table)
+library(Seurat, lib.loc="/usr/local/lib/R/site-library/")
+library(ggplot2, lib.loc="/usr/local/lib/R/site-library/")
+library(patchwork, lib.loc="/usr/local/lib/R/site-library/")
+library(dplyr, lib.loc="/usr/local/lib/R/site-library/")
+library(data.table, lib.loc="/usr/local/lib/R/site-library/")
 
-library(Matrix)
-library(cowplot)
-library(RColorBrewer)
-library(grid)
-library(readbitmap)
-library(argparse)
+library(Matrix, lib.loc="/usr/local/lib/R/site-library/")
+library(cowplot, lib.loc="/usr/local/lib/R/site-library/")
+library(RColorBrewer, lib.loc="/usr/local/lib/R/site-library/")
+library(grid, lib.loc="/usr/local/lib/R/site-library/")
+library(readbitmap, lib.loc="/usr/local/lib/R/site-library/")
+library(argparse, lib.loc="/usr/local/lib/R/site-library/")
 
 
 # create parser object
