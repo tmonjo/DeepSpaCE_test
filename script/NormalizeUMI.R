@@ -1,18 +1,35 @@
+.libPaths("")
 rm(list=ls())
 options(stringsAsFactors=F)
 
-library(Seurat, lib.loc="/usr/local/lib/R/site-library/")
-library(ggplot2, lib.loc="/usr/local/lib/R/site-library/")
-library(patchwork, lib.loc="/usr/local/lib/R/site-library/")
-library(dplyr, lib.loc="/usr/local/lib/R/site-library/")
-library(data.table, lib.loc="/usr/local/lib/R/site-library/")
+#library(dplyr, lib.loc="/usr/local/lib/R/site-library/")
+#library(data.table, lib.loc="/usr/local/lib/R/site-library/")
 
-library(Matrix, lib.loc="/usr/local/lib/R/site-library/")
-library(cowplot, lib.loc="/usr/local/lib/R/site-library/")
-library(RColorBrewer, lib.loc="/usr/local/lib/R/site-library/")
-library(grid, lib.loc="/usr/local/lib/R/site-library/")
-library(readbitmap, lib.loc="/usr/local/lib/R/site-library/")
-library(argparse, lib.loc="/usr/local/lib/R/site-library/")
+#library(Seurat, lib.loc="/usr/local/lib/R/site-library/")
+#library(ggplot2, lib.loc="/usr/local/lib/R/site-library/")
+#library(patchwork, lib.loc="/usr/local/lib/R/site-library/")
+
+#library(Matrix, lib.loc="/usr/lib/R/library/")
+#library(cowplot, lib.loc="/usr/local/lib/R/site-library/")
+#library(RColorBrewer, lib.loc="/usr/local/lib/R/site-library/")
+#library(grid, lib.loc="/usr/local/lib/R/site-library/")
+#library(readbitmap, lib.loc="/usr/local/lib/R/site-library/")
+#library(argparse, lib.loc="/usr/local/lib/R/site-library/")
+
+
+library(dplyr)
+library(data.table)
+
+library(Seurat)
+library(ggplot2)
+library(patchwork)
+
+library(Matrix)
+library(cowplot)
+library(RColorBrewer)
+library(grid)
+library(readbitmap)
+library(argparse)
 
 
 # create parser object
