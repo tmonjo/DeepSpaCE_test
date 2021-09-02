@@ -1,4 +1,6 @@
-.libPaths("")
+#!/usr/bin/env Rscript
+
+#.libPaths("")
 rm(list=ls())
 options(stringsAsFactors=F)
 
