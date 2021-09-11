@@ -1,30 +1,12 @@
-#!/usr/bin/env Rscript
-
-.libPaths("")
 rm(list=ls())
+#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 options(stringsAsFactors=F)
-
-#library(dplyr, lib.loc="/usr/local/lib/R/site-library/")
-#library(data.table, lib.loc="/usr/local/lib/R/site-library/")
-
-#library(Seurat, lib.loc="/usr/local/lib/R/site-library/")
-#library(ggplot2, lib.loc="/usr/local/lib/R/site-library/")
-#library(patchwork, lib.loc="/usr/local/lib/R/site-library/")
-
-#library(Matrix, lib.loc="/usr/lib/R/library/")
-#library(cowplot, lib.loc="/usr/local/lib/R/site-library/")
-#library(RColorBrewer, lib.loc="/usr/local/lib/R/site-library/")
-#library(grid, lib.loc="/usr/local/lib/R/site-library/")
-#library(readbitmap, lib.loc="/usr/local/lib/R/site-library/")
-#library(argparse, lib.loc="/usr/local/lib/R/site-library/")
-
-
-library(dplyr)
-library(data.table)
 
 library(Seurat)
 library(ggplot2)
 library(patchwork)
+library(dplyr)
+library(data.table)
 
 library(Matrix)
 library(cowplot)

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 import pandas as pd
 import numpy as np
@@ -41,8 +39,6 @@ from BasicLib import make_classification_report
 
 
 # ## makeDataList
-
-# In[2]:
 
 
 def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols, quantileRGB, seed, cross_index, train_equals_test, is_test, rm_cluster):
@@ -215,7 +211,7 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
 
                 count += 1
 
-        else:
+        else: # Just for training data
             data_list_df_test_index = data_list_df_test.query('have_exp != True').index
             data_list_df_test = data_list_df_test.drop(data_list_df_test_index)
 
@@ -234,8 +230,6 @@ def makeDataList(rootDir, sampleNames, clusteringMethod, extraSize, geneSymbols,
     
     return data_list_df
 
-
-# In[14]:
 
 
 ### verification ###
@@ -268,8 +262,6 @@ if __name__ == '__main__':
 
 
 # ## makeTrainDataloader
-
-# In[15]:
 
 
 def makeTrainDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, augmentation, batch_size, ClusterPredictionMode):
@@ -319,18 +311,13 @@ def makeTrainDataloader(rootDir, data_list_df, geneSymbols, size, mean, std, aug
     
     print("### check2 ###")
     batch_iterator = print(dataloaders_dict)
-
     batch_iterator = iter(dataloaders_dict["train"])
-
     inputs, labels = next(batch_iterator)
-
     print(inputs.size())
     print(labels.size())
     
     return dataloaders_dict
 
-
-# In[16]:
 
 
 ### verification ###
@@ -351,8 +338,6 @@ if __name__ == '__main__':
 
 
 # # make network model
-
-# In[42]:
 
 
 def make_model(use_pretrained, num_features, transfer, model):
@@ -410,14 +395,12 @@ def make_model(use_pretrained, num_features, transfer, model):
     return net, params_to_update
 
 
-# In[44]:
-
 
 ### verification ###
 if __name__ == '__main__':
     print("### make model ###")
     net, params_to_update = make_model(use_pretrained=True,
-                                       num_features=3,
+                                       num_features=len(data_list_teacher['Cluster'].unique()),
                                        transfer=False,
                                        model="VGG16")
 
@@ -427,8 +410,6 @@ if __name__ == '__main__':
 
 
 # # loss function
-
-# In[19]:
 
 
 def loss_function(outputs, labels):
@@ -443,8 +424,6 @@ def loss_function(outputs, labels):
 
     return loss
 
-
-# In[20]:
 
 
 def calc_cor(outputs, labels):
@@ -470,8 +449,6 @@ def calc_cor(outputs, labels):
 
 
 # ## train_model
-
-# In[21]:
 
 
 def run_train(outDir, net, dataloaders_dict, optimizer, num_epochs, device, early_stop_max, name, ClusterPredictionMode):
@@ -617,8 +594,6 @@ def run_train(outDir, net, dataloaders_dict, optimizer, num_epochs, device, earl
         time_df.to_csv(outDir+"/time_"+name+".txt", sep='\t', float_format='%.6f')
 
 
-# In[22]:
-
 
 ### verification ###
 if __name__ == '__main__':
@@ -641,8 +616,6 @@ if __name__ == '__main__':
 
 
 # # Validation (Test set)
-
-# In[25]:
 
 
 def makeTestDataloader(rootDir, data_list_df, model, geneSymbols, size, mean, std, augmentation, batch_size, ClusterPredictionMode):
@@ -685,8 +658,6 @@ def makeTestDataloader(rootDir, data_list_df, model, geneSymbols, size, mean, st
     return dataloaders_dict_test
 
 
-# In[32]:
-
 
 ### verification ###
 if __name__ == '__main__':
@@ -701,8 +672,6 @@ if __name__ == '__main__':
                                                batch_size=128,
                                                ClusterPredictionMode=False)
 
-
-# In[33]:
 
 
 def run_test(outDir, data_list_df, dataloaders_dict, model, device, geneSymbols, num_features, ClusterPredictionMode, name):
@@ -830,8 +799,6 @@ def run_test(outDir, data_list_df, dataloaders_dict, model, device, geneSymbols,
 
 
 
-
-# In[34]:
 
 
 ### verification ###

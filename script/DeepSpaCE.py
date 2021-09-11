@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 import glob
 import os.path as osp
@@ -62,13 +60,9 @@ from DeepSpaceLib import makeSemiDataloader
 from DeepSpaceLib import predict_semi_label
 
 
-# In[40]:
-
 
 argrequired = False
 
-
-# In[41]:
 
 
 parser = argparse.ArgumentParser(description='DeepSpaCE')
@@ -151,13 +145,9 @@ parser.add_argument('--geneSymbols', type=str, default='ESR1,ERBB2,MKI67',
 args = parser.parse_args()
 
 
-# In[39]:
-
 
 print(args)
 
-
-# In[4]:
 
 
 dataDir = args.dataDir
@@ -218,8 +208,6 @@ ClusterPredictionMode = args.ClusterPredictionMode
 print("ClusterPredictionMode: "+str(ClusterPredictionMode))
 
 
-# In[5]:
-
 
 if args.rm_cluster == 'None':
     rm_cluster = -1
@@ -229,21 +217,15 @@ else:
 print("rm_cluster: "+str(rm_cluster))
 
 
-# In[6]:
-
 
 sampleNames_train = args.sampleNames_train.split(',')
 print("sampleNames_train: "+str(sampleNames_train))
 
 
-# In[7]:
-
 
 sampleNames_test = args.sampleNames_test.split(',')
 print("sampleNames_test: "+str(sampleNames_test))
 
-
-# In[8]:
 
 
 if sampleNames_train == sampleNames_test:
@@ -254,21 +236,15 @@ else:
 print("train_equals_test: "+str(train_equals_test))
 
 
-# In[9]:
-
 
 sampleNames_semi = args.sampleNames_semi.split(',')
 print("sampleNames_semi: "+str(sampleNames_semi))
 
 
-# In[10]:
-
 
 geneSymbols = args.geneSymbols.split(',')
 print(geneSymbols)
 
-
-# In[11]:
 
 
 size = 224
@@ -281,8 +257,6 @@ std = (0.229, 0.224, 0.225)
 print("std: "+str(std))
 
 
-# In[12]:
-
 
 print("### Set seeds ###")
 torch.manual_seed(seed)
@@ -292,14 +266,10 @@ random.seed(seed)
 torch.set_num_threads(threads)
 
 
-# In[13]:
-
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-
-# In[14]:
 
 
 print("### Check GPU availability ###")
@@ -308,8 +278,6 @@ print("device: ", device)
 
 
 # # make data_list (teacher)
-
-# In[15]:
 
 
 data_list_teacher = makeDataList(rootDir=dataDir,
@@ -337,8 +305,6 @@ data_list_teacher.head()
 
 # # make dataloader (teacher)
 
-# In[16]:
-
 
 dataloaders_dict_teacher = makeTrainDataloader(rootDir=dataDir,
                                                data_list_df=data_list_teacher,
@@ -361,8 +327,6 @@ with open(outDir+"/dataloaders_dict_teacher.pickle", mode='wb') as f:
 
 # # make network model (teacher)
 
-# In[17]:
-
 
 print("### make model ###")
 if ClusterPredictionMode:
@@ -379,8 +343,6 @@ else:
 
 # # set optimizer
 
-# In[18]:
-
 
 print("### set optimizer ###")
 optimizer = optim.Adam(params=params_to_update, lr=lr, weight_decay=weight_decay)
@@ -391,8 +353,6 @@ optimizer = optim.Adam(params=params_to_update, lr=lr, weight_decay=weight_decay
 
 
 # # Training (teacher)
-
-# In[19]:
 
 
 print("### run train ###")
@@ -412,8 +372,6 @@ run_train(outDir=outDir,
 
 
 # # Test (teacher)
-
-# In[22]:
 
 
 data_list_test = makeDataList(rootDir=dataDir,
@@ -439,8 +397,6 @@ print("data_list_test: "+str(data_list_test.shape))
 data_list_test.head()
 
 
-# In[24]:
-
 
 dataloaders_dict_test = makeTestDataloader(rootDir=dataDir,
                                            data_list_df=data_list_test,
@@ -457,8 +413,6 @@ dataloaders_dict_test = makeTestDataloader(rootDir=dataDir,
 with open(outDir+"/DataLoader_test.pickle", mode='wb') as f:
     pickle.dump(dataloaders_dict_test, f)
 
-
-# In[28]:
 
 
 ### Test ###
@@ -480,16 +434,12 @@ data_list_test_teacher.head()
 
 # # Semi-supervised
 
-# In[29]:
-
 
 if sampleNames_semi == ["None"]:
     sys.exit()
 else:
     print("### Semi-supervised ###")
 
-
-# In[30]:
 
 
 ImageSet = [[0,1],[2,3],[4,5],[6,7],[8,9]]

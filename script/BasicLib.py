@@ -20,10 +20,16 @@ from mlxtend.evaluate import confusion_matrix
 from sklearn.metrics import classification_report
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import minmax_scale
+from sklearn.metrics import mean_squared_error
 
 import cv2
 
 import torch
+
+
+
+
 
 
 
@@ -248,6 +254,9 @@ def make_classification_report(valid_labels, valid_preds, class_names, name):
 def plot_correlation_scatter_hist(valid_labels, valid_preds, geneSymbols, scatter, name):
     corR = []
     
+    corR_df = pd.DataFrame(columns=['geneSymbols','corR','RMSE','RMSE_MinMax'] )
+
+    
     for i in range(len(geneSymbols)):
         
         idx = np.isnan(valid_labels[:,i])
@@ -255,7 +264,15 @@ def plot_correlation_scatter_hist(valid_labels, valid_preds, geneSymbols, scatte
         pred = valid_preds[~idx,i]
 
         corR.append(np.corrcoef(lab, pred)[0,1])
-#        corR.append(np.corrcoef(valid_labels[:,i], valid_preds[:,i])[0,1])
+        corR_tmp = np.corrcoef(lab, pred)[0,1]
+        rmse = np.sqrt(mean_squared_error(lab, pred))
+        rmse_minmax = np.sqrt(mean_squared_error(lab, minmax_scale(pred)))
+                              
+        corR_df = corR_df.append(pd.Series([geneSymbols[i],corR_tmp,rmse,rmse_minmax], index=['geneSymbols','corR','RMSE','RMSE_MinMax']), ignore_index=True)
+
+                              
+    corR_df.to_csv("../out/corR_"+name+".txt", index=False, sep='\t', float_format='%.6f')
+
 
     with open("../out/correlation_"+name+".txt", mode='w') as f:
         for i in range(len(geneSymbols)):
