@@ -92,7 +92,6 @@ Build an image on your local environment since root privileges are required. The
             --threads 8 \
             --GPUs 1 \
             --cuda \
-            --full \
             --modelName teacher \
             --batch_size 128 \
             --extraSize 150 \
