@@ -29,6 +29,22 @@ Build an image on your local environment since root privileges are required. The
 
 
 # Usage
+## Input files
+
+1. Space Ranger outputs
+
+    /DeepSpaCE/data/{sampleName}/SpaceRanger/analysis/
+    
+    /DeepSpaCE/data/{sampleName}/SpaceRanger/spatial/
+    
+    /DeepSpaCE/data/{sampleName}/SpaceRanger/filtered_feature_bc_matrix.h5
+
+2. TIFF image
+
+    /DeepSpaCE/data/{sampleName}/SpaceRanger/image.tiff
+
+
+
 ## Preprocessing 1: Section image files
 
     singularity exec DeepSpaCE.sif \
