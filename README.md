@@ -29,19 +29,19 @@ Build an image on your local environment since root privileges are required. The
 
 
 # Usage
-## Input files
+## Input files (all files must be located in a same directory of sampleName)
 
 1. Space Ranger outputs
 
-    /DeepSpaCE/data/{sampleName}/SpaceRanger/analysis/
+    /home/$USER/DeepSpaCE/data/{sampleName}/SpaceRanger/analysis/
     
-    /DeepSpaCE/data/{sampleName}/SpaceRanger/spatial/
+    /home/$USER/DeepSpaCE/data/{sampleName}/SpaceRanger/spatial/
     
-    /DeepSpaCE/data/{sampleName}/SpaceRanger/filtered_feature_bc_matrix.h5
+    /home/$USER/DeepSpaCE/data/{sampleName}/SpaceRanger/filtered_feature_bc_matrix.h5
 
-2. TIFF image
+2. TIFF image (same directory)
 
-    /DeepSpaCE/data/{sampleName}/SpaceRanger/image.tiff
+    /home/$USER/DeepSpaCE/data/{sampleName}/SpaceRanger/image.tiff
 
 
 
@@ -80,7 +80,7 @@ Build an image on your local environment since root privileges are required. The
             --GPUs 1 \
             --cuda \
             --transfer \
-            --model vgg16 \
+            --model VGG16 \
             --batch_size 128 \
             --num_epochs 10 \
             --lr 1e-4 \
@@ -101,7 +101,6 @@ Build an image on your local environment since root privileges are required. The
     singularity exec --nv DeepSpaCE.sif \
         python ./SuperResolution.py \
             --dataDir /home/$USER/DeepSpaCE/data \
-            --modelDir /home/$USER/DeepSpaCE/out \
             --outDir /home/$USER/DeepSpaCE/out \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --seed 0 \
@@ -123,7 +122,6 @@ Build an image on your local environment since root privileges are required. The
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --geneSymbol ESR1 \
             --extraSize 150 \
-            --resolution low
 
 
 # Citation
