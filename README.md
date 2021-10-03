@@ -122,7 +122,7 @@ Build an image on your local environment since root privileges are required. The
             --outDir /home/$USER/DeepSpaCE/out \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --geneSymbol ESR1 \
-            --extraSize 150 \
+            --extraSize 150
 
 
 # Citation
