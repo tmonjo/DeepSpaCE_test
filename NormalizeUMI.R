@@ -39,7 +39,7 @@ parser <- ArgumentParser()
 
 parser$add_argument("--dataDir", default=paste0("/home/",Sys.getenv("USER"),"/DeepSpaCE/data"),
                     help="Data directory [default %(default)s]")
-parser$add_argument("--sampleName", default="Human_Breast_Cancer_Block_A_Section_1",
+parser$add_argument("--sampleName", default="Breast_Cancer_Block_A_Section_1",
                     help="Sample name [default %(default)s]")
 parser$add_argument("--threshold_count", type="integer", default=1000,
                     help="TODO [default %(default)s]")
