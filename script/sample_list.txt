@@ -1,3 +1,0 @@
-sampleName	radiusPixel	transposeType
-Human_Breast_Cancer_Block_A_Section_1	75	0
-Human_Breast_Cancer_Block_A_Section_2	75	0
