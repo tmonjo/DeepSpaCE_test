@@ -70,7 +70,7 @@ Build an image on your local environment since root privileges are required. The
     singularity exec --nv DeepSpaCE.sif \
         python DeepSpaCE.py \
             --dataDir /home/$USER/DeepSpaCE/data \
-            --outDir /home/$USER/DeepSpaCE/ \
+            --outDir /home/$USER/DeepSpaCE/out \
             --sampleNames_train Human_Breast_Cancer_Block_A_Section_1 \
             --sampleNames_test Human_Breast_Cancer_Block_A_Section_1 \
             --sampleNames_semi None \
