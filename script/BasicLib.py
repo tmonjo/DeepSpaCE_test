@@ -2,512 +2,354 @@
 # coding: utf-8
 
 
-import math
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
+import math
 
-import argparse
-import subprocess
-import os
+import torch.utils.data as data
+
+import albumentations as albu
+from albumentations.pytorch import ToTensor
+
+#from PIL import Image
+from torchvision import transforms
+import matplotlib.pyplot as plt
+
+from mlxtend.plotting import plot_confusion_matrix
+from mlxtend.evaluate import confusion_matrix
+from sklearn.metrics import classification_report
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import minmax_scale
+from sklearn.metrics import mean_squared_error
 
 import cv2
-from PIL import Image
+
+import torch
 
 
 
-parser = argparse.ArgumentParser(description='Crop Image')
-
-parser.add_argument('--dataDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/data',
-                   help='Data directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/data'+')')
-
-parser.add_argument('--sampleName', type=str, default='Human_Breast_Cancer_Block_A_Section_1',
-                   help='Sample name (default: Human_Breast_Cancer_Block_A_Section_1)')
-
-parser.add_argument('--transposeType', type=int, default=0,
-                   help='0: No transpose, 1: Rotate90CC, 2: Rotate90CC+Flip (default: 0)')
-
-parser.add_argument('--radiusPixel', type=int, default=40,
-                   help='Radius [pixel] (default: 40)')
-
-parser.add_argument('--extraSize', type=int, default=150,
-                   help='Extra image size (default: 150)')
-
-parser.add_argument('--quantileRGB', type=int, default=80,
-                   help='Threshold of quantile RGB (default: 80)')
-
-args = parser.parse_args()
 
 
 
-print(args)
+
+class ImageTransform():
+
+    def __init__(self, resize, mean, std):
+        self.data_transform = {
+            'init': albu.Compose([
+                albu.Resize(resize, resize)
+            ]),
+            'end': albu.Compose([
+                albu.Normalize(mean,std),
+                ToTensor()
+            ]),
+            'flip': albu.Compose([
+                albu.RandomRotate90(p=0.5),
+                albu.Flip(p=0.5),
+                albu.Transpose(p=0.5)
+            ], p=1.0),
+            'noise': albu.Compose([
+                albu.OneOf([
+                    albu.IAAAdditiveGaussianNoise(p=1.0),
+                    albu.GaussNoise(p=1.0)
+                ], p=1.0),
+            ], p=1.0),
+            'blur': albu.Compose([
+                albu.OneOf([
+                    albu.MotionBlur(p=1.0),
+                    albu.MedianBlur(p=1.0),
+                    albu.Blur(p=1.0)
+                ], p=1.0),
+            ], p=1.0),
+            'dist': albu.Compose([
+                albu.OneOf([
+                    albu.OpticalDistortion(p=1.0),
+                    albu.GridDistortion(p=1.0),
+                    albu.IAAPiecewiseAffine(p=1.0),
+                    albu.ShiftScaleRotate(p=1.0)
+                ], p=1.0),
+            ], p=1.0),
+            'contrast': albu.Compose([
+                albu.RandomContrast(p=0.5),
+                albu.RandomGamma(p=0.5),
+                albu.RandomBrightness(p=0.5)
+            ], p=1.0),
+            'color': albu.Compose([
+                albu.HueSaturationValue(p=0.5),
+                albu.ChannelShuffle(p=0.5),
+                albu.RGBShift(p=0.5)
+            ], p=1.0),
+            'crop': albu.Compose([
+                albu.RandomResizedCrop(height=resize, width=resize, scale=(0.5, 1.0), p=0.5),
+            ], p=1.0),
+            'random': albu.Compose([
+                albu.OneOf([
+                    albu.OneOf([
+                        albu.IAAAdditiveGaussianNoise(p=1.0),
+                        albu.GaussNoise(p=1.0)
+                    ], p=1.0),
+                    albu.OneOf([
+                        albu.MotionBlur(p=1.0),
+                        albu.MedianBlur(p=1.0),
+                        albu.Blur(p=1.0)
+                    ], p=1.0),
+                    albu.OneOf([
+                        albu.OpticalDistortion(p=1.0),
+                        albu.GridDistortion(p=1.0),
+                        albu.IAAPiecewiseAffine(p=1.0),
+                        albu.ShiftScaleRotate(p=1.0)
+                    ], p=1.0),
+                ], p=1.0),            
+            ], p=1.0),
+            'valid': albu.Compose([
+                albu.Resize(resize, resize),
+                albu.CenterCrop(resize, resize),
+                albu.Normalize(mean, std),
+                ToTensor()
+            ])
+        }
+
+    def __call__(self, img, phase='train', param=''):
+        if phase == 'train':
+            img = self.data_transform['init'](image=img)
+
+            if param != 'none':
+                param = param.split(',')
+                
+                for para in param:
+                    img = self.data_transform[para](image=img['image'])
+
+            img = self.data_transform['end'](image=img['image'])
+        elif phase == 'valid':
+            img = self.data_transform['valid'](image=img)
+        
+        return img['image']
 
 
 
-dataDir = args.dataDir
-print("dataDir: "+str(dataDir))
+class SpotImageDataset(data.Dataset):
+    def __init__(self, file_list, label_df, transform=None, phase='train', param=''):
+        self.file_list = file_list
+        self.label_df = label_df
+        self.transform = transform
+        self.phase = phase
+        self.param = param
 
-sampleName = args.sampleName
-print("sampleName: "+sampleName)
+    def __len__(self):
+        return len(self.file_list)
 
-transposeType = args.transposeType
-print("transposeType: "+str(transposeType))
+    def __getitem__(self, index):
+        # load image of index
+        img = cv2.imread(self.file_list[index])
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        # Image transform
+        img_transformed = self.transform(img, self.phase, self.param)
 
-radiusPixel = args.radiusPixel
-print("radiusPixel: "+str(radiusPixel))
-
-extraSize = args.extraSize
-print("extraSize: "+str(extraSize))
-
-quantileRGB = args.quantileRGB
-print("quantileRGB: "+str(quantileRGB))
-
-
-
-def pil2cv(image):
-    ''' PIL -> OpenCV '''
-    new_image = np.array(image, dtype=np.uint8)
-    if new_image.ndim == 2:
-        pass
-    elif new_image.shape[2] == 3:
-        new_image = cv2.cvtColor(new_image, cv2.COLOR_RGB2BGR)
-    elif new_image.shape[2] == 4:
-        new_image = cv2.cvtColor(new_image, cv2.COLOR_RGBA2BGRA)
-    return new_image
-
-
-# # Crop Image
-
-
-dirName = dataDir+"/"+sampleName
-
-subprocess.call(['mkdir','-p',dirName+"/CropImage/size_"+str(extraSize)+"/spot_images"])
+        # label
+        label = self.label_df.iloc[index,:].tolist()
+        
+        return img_transformed, torch.tensor(label)
 
 
 
-### load Image
-Image.MAX_IMAGE_PIXELS = 1000000000
-I = Image.open(dirName+"/SpaceRanger/image.tif")
-
-I = pil2cv(I)
-
-print(I.shape)
 
 
 
-## Transpose
-if transposeType == 1:
-    I = cv2.rotate(I, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-elif transposeType == 2:
-    I = cv2.rotate(I, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    I = np.fliplr(I)
+# Plot Loss
+def plot_loss(loss_acc_df, name):
+    fig = plt.figure()
 
-cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/transpose_image.tif", I)
+    plt.scatter(loss_acc_df.index, loss_acc_df['train_loss'], label="train")
+    plt.scatter(loss_acc_df.index, loss_acc_df['valid_loss'], label="valid")
+    plt.xlabel("Epoch", fontsize=16)
+    plt.ylabel("Loss", fontsize=16)
+    plt.tick_params(labelsize=12)
 
-### load Image
-I = cv2.imread(dirName+"/CropImage/size_"+str(extraSize)+"/transpose_image.tif")
+    plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.3, fontsize=15)
 
-print(I.shape)
+    plt.yscale('log')
 
+    plt.xticks(np.arange(0, math.ceil((loss_acc_df.shape[0]-1)/50) * 50 + 1, math.ceil((loss_acc_df.shape[0]-1)/50) * 10))
 
+    plt.subplots_adjust(left=0.2, right=0.9, bottom=0.16, top=0.9)
 
-# keep original image
-I_org = I.copy()
+    fig.savefig("../out/loss_plot_"+name+".png")
 
-
-
-### load tissue_position
-tissue_pos = pd.read_csv(dirName+"/SpaceRanger/spatial/tissue_positions_list.csv", header=None)
-tissue_pos.columns = ['Barcode','in_tissue','array_row','array_col','pxl_row_in_fullres','pxl_col_in_fullres']
-
-tissue_pos['imageID'] = tissue_pos.index
-
-print("tissue_pos: "+str(tissue_pos.shape))
-print(tissue_pos.head())
+    plt.close()
 
 
 
-## calc radius
-radius = math.ceil(radiusPixel * (1 + extraSize/100))
-print("radius: "+str(radius))
+# Plot Acc
+def plot_acc(loss_acc_df, name):
+    fig = plt.figure()
+
+    plt.scatter(loss_acc_df.index, loss_acc_df['train_acc'], label="train")
+    plt.scatter(loss_acc_df.index, loss_acc_df['valid_acc'], label="valid")
+    plt.xlabel("Epoch", fontsize=16)
+    plt.ylabel("Accuracy", fontsize=16)
+    plt.tick_params(labelsize=12)
+
+    plt.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.3, fontsize=15)
+
+    plt.xticks(np.arange(0, math.ceil((loss_acc_df.shape[0]-1)/50) * 50 + 1, math.ceil((loss_acc_df.shape[0]-1)/50) * 10))
+
+    plt.subplots_adjust(left=0.2, right=0.9, bottom=0.16, top=0.9)
+
+    fig.savefig("../out/acc_plot_"+name+".png")
+
+    plt.close()
 
 
 
-### draw line and text
-for i in range(4992):
-    pos_x1 = tissue_pos.iloc[i,5]-radius
-    pos_x2 = tissue_pos.iloc[i,5]+radius
-    pos_y1 = tissue_pos.iloc[i,4]-radius
-    pos_y2 = tissue_pos.iloc[i,4]+radius
+### Plot confusion matrix ###
+def plot_conf_matrix(valid_labels, valid_preds, class_names, name):
     
-    I = cv2.rectangle(I, (pos_x1,pos_y1), (pos_x2,pos_y2), (0, 0, 0), 2)
-    I = cv2.putText(I, str(i), (pos_x1,pos_y1), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 0), lineType=cv2.LINE_AA, thickness=2)
+    conf_mat = confusion_matrix(y_target=valid_labels, y_predicted=valid_preds)
+
+    plt.figure()
+
+    plt.rcParams["font.size"] = 15
+
+    fig, ax = plot_confusion_matrix(conf_mat=conf_mat,
+                                    colorbar=False,
+                                    show_absolute=True,
+                                    show_normed=True,
+                                    class_names=class_names,
+                                    cmap=plt.cm.Blues,
+                                    figsize=(10,10))
+
+    plt.xlabel("Predicted label", fontsize=25)
+    plt.ylabel("True label", fontsize=25)
+    plt.tick_params(labelsize=12)
+
+    plt.ylim(conf_mat.shape[0]-0.5,-0.5)
+
+    plt.subplots_adjust(left=0.2, right=0.9, bottom=0.16, top=0.9)
+    plt.savefig("../out/confusion_matrix_plot_"+name+".png")
+
+    #plt.show()
+    plt.close()
 
 
 
-### save Image
-cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/original_image_with_spots.tif", I)
-
-
-
-### split Image
-I = I_org.copy()
-
-for i in range(4992):
-    pos_x1 = tissue_pos.iloc[i,5]-radius
-    pos_x2 = tissue_pos.iloc[i,5]+radius
-    pos_y1 = tissue_pos.iloc[i,4]-radius
-    pos_y2 = tissue_pos.iloc[i,4]+radius
-
-    I2 = I[pos_y1:pos_y2, pos_x1:pos_x2]
-    cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/spot_images/spot_image_"+str(i).zfill(4)+".tif", I2)
-
-
-# # Make RGB filter list
-
-
-### load cluster list ###
-cluster_list = pd.read_csv(dirName+"/SpaceRanger/analysis/clustering/graphclust/clusters.csv")
-
-print("cluster_list: "+str(cluster_list.shape))
-print(cluster_list.head())
-
-
-
-### merge cluster file and tissue position file ###
-cluster_pos_df = pd.merge(cluster_list, tissue_pos, how='left', on='Barcode')
-
-cluster_pos_df['image_path'] = [dirName+"/CropImage/size_"+str(extraSize)+"/spot_images/spot_image_"+str(s).zfill(4)+".tif" for s in cluster_pos_df['imageID'].tolist()]
-cluster_pos_df = cluster_pos_df.sort_values('imageID')
-cluster_pos_df.index = cluster_pos_df['imageID'].tolist()
-
-cluster_pos_df['ImageFilter'] = "null"
-cluster_pos_df
-
-print("cluster_pos_df: "+str(cluster_pos_df.shape))
-print(cluster_pos_df.head())
-
-
-
-### mkdir
-subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/NG/"])
-subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/OK/"])
-
-
-
-### count mean RGB values ###
-mean_value_list = list()
-
-for i in cluster_pos_df.index:
-    #print(i)
-    I = cv2.imread(cluster_pos_df.loc[i,'image_path'])
-    #print(I.shape)
-
-    total_value = np.sum(I[:,:,0]) + np.sum(I[:,:,1]) + np.sum(I[:,:,2])
+### make classification_report ###
+def make_classification_report(valid_labels, valid_preds, class_names, name):
     
-    total_value = total_value / (I.shape[0] * I.shape[1]) / 3
+    report_df = classification_report(valid_labels, valid_preds, target_names=class_names, output_dict=True)
+    report_df = pd.DataFrame(report_df)
+    report_df = report_df.T
+    report_df['Cluster'] = report_df.index
+    report_df = report_df.loc[:,['Cluster','precision','recall','f1-score','support']]
+    report_df['support'] = report_df['support'].astype(np.int64)
+
+    report_df.to_csv("../out/classification_report_"+name+".txt", index=False, sep='\t', float_format='%.6f')
+
+    report_df
+
+
+
+def plot_correlation_scatter_hist(valid_labels, valid_preds, geneSymbols, scatter, name):
+    corR = []
     
-    #print(total_value)
-    mean_value_list.append(total_value)
+    corR_df = pd.DataFrame(columns=['geneSymbols','corR','RMSE','RMSE_MinMax'] )
 
-
-
-cluster_pos_df['mean_RGB'] = [round(f, 4) for f in mean_value_list]
-
-print("cluster_pos_df: "+str(cluster_pos_df.shape))
-print(cluster_pos_df.head())
-
-
-
-## Define threshold
-c_array = np.percentile(mean_value_list, q=[quantileRGB])
-c_array
-
-white_th = 255 if quantileRGB == 100 else c_array[0]
-
-print("white_th: "+str(white_th))
-
-
-
-with open(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/white_th.txt", mode='w') as f:
-    f.write(str(white_th)+"\n")
-
-
-
-# Histgram
-fig = plt.figure()
-
-plt.hist(mean_value_list, bins=50)
-
-plt.xlabel("mean RGB", fontsize=20)
-plt.ylabel("Frequency", fontsize=20)
-
-plt.axvline(x=white_th, color='r')
-
-fig.savefig(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/meanRGB.png")
-
-plt.close()
-
-
-
-### Threshold percentage ###
-pixel_th_white = I.shape[0] * I.shape[1] * 0.5
-
-print("pixel_th_white: "+str(pixel_th_white))
-
-
-
-### load Image
-for i in cluster_pos_df.index:
-    #print(i)
-    I = cv2.imread(cluster_pos_df.loc[i,'image_path'])
-    #print(I.shape)
     
-    ### color threshold (white)
-    count_white = sum(np.logical_and.reduce((I[:,:,0] > white_th, I[:,:,1] > white_th, I[:,:,2] > white_th)))
-    
-    if sum(count_white) > pixel_th_white:
-        subprocess.call(["cp","-p",dirName+"/CropImage/size_"+str(extraSize)+"/spot_images/spot_image_"+str(i).zfill(4)+".tif",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/NG/"])
-        cluster_pos_df.loc[cluster_pos_df.index == i,"ImageFilter"] = "NG"
-    else:
-        subprocess.call(["cp","-p",dirName+"/CropImage/size_"+str(extraSize)+"/spot_images/spot_image_"+str(i).zfill(4)+".tif",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/OK/"])
-        cluster_pos_df.loc[cluster_pos_df.index == i,"ImageFilter"] = "OK"
- 
+    for i in range(len(geneSymbols)):
+        
+        idx = np.isnan(valid_labels[:,i])
+        lab = valid_labels[~idx,i]
+        pred = valid_preds[~idx,i]
 
+        corR.append(np.corrcoef(lab, pred)[0,1])
+        corR_tmp = np.corrcoef(lab, pred)[0,1]
+        rmse = np.sqrt(mean_squared_error(lab, pred))
+        rmse_minmax = np.sqrt(mean_squared_error(lab, minmax_scale(pred)))
+                              
+        corR_df = corR_df.append(pd.Series([geneSymbols[i],corR_tmp,rmse,rmse_minmax], index=['geneSymbols','corR','RMSE','RMSE_MinMax']), ignore_index=True)
 
+                              
+    corR_df.to_csv("../out/corR_"+name+".txt", index=False, sep='\t', float_format='%.6f')
 
-cluster_pos_df.to_csv(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/cluster_position_filter.txt", index=False, sep='\t')
 
+    with open("../out/correlation_"+name+".txt", mode='w') as f:
+        for i in range(len(geneSymbols)):
+            f.write(geneSymbols[i]+"\t"+'{:.3f}'.format(corR[i])+"\n")
 
-# # Crop Image (interpolation)
+    ### scatter plot
+    if scatter == True:
+        for i in range(len(geneSymbols)):
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
 
+            idx = np.isnan(valid_labels[:,i])
+            lab = valid_labels[~idx,i]
+            pred = valid_preds[~idx,i]
 
-I = I_org.copy()
+            
+#            plt.scatter(valid_labels[:,i], valid_preds[:,i], label="test")
+            plt.scatter(lab, pred, label="test")
+            plt.xlabel("log10(UMIcount+1)", fontsize=20)
+            plt.ylabel("Predicted expression", fontsize=20)
+            plt.tick_params(labelsize=12)
 
-subprocess.call(['mkdir','-p',dirName+"/CropImage/size_"+str(extraSize)+"/spot_images_inter"])
+            plt.subplots_adjust(left=0.16, right=0.9, bottom=0.16, top=0.9)
 
+            plt.text(0.025, 0.9, "r="+'{:.3f}'.format(corR[i]), size = 20, color = "black", transform=ax.transAxes)
 
+            fig.savefig("../out/plot/scatter_plot_"+geneSymbols[i]+"_"+name+".png")
 
-### draw line and text
-for i in range(4992):
-    pos_x1 = tissue_pos.iloc[i,5]-radius
-    pos_x2 = tissue_pos.iloc[i,5]+radius
-    pos_y1 = tissue_pos.iloc[i,4]-radius
-    pos_y2 = tissue_pos.iloc[i,4]+radius
-    
-    I = cv2.rectangle(I, (pos_x1,pos_y1), (pos_x2,pos_y2), (0, 0, 0), 2)
-    I = cv2.putText(I, str(i), (pos_x1,pos_y1), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 0), lineType=cv2.LINE_AA, thickness=2)
+            plt.close()
 
+    ### Hist
+    fig = plt.figure()
 
+    plt.hist(corR, bins=20)
+    plt.xlim([0,1])
 
-### draw line and text
-count_inter = 0
+    plt.xlabel("Pearson correlation coefficient", fontsize=20)
+    plt.ylabel("Frequency", fontsize=20)
 
-for i in range(4992):
-    
-    if tissue_pos.iloc[i,3] == 0 or tissue_pos.iloc[i,3] == 127:
-        continue
-       
-    center_x = (tissue_pos.iloc[i-1,5] + tissue_pos.iloc[i,5] + tissue_pos.iloc[i+1,5]) / 3.0
-    center_y = (tissue_pos.iloc[i-1,4] + tissue_pos.iloc[i,4] + tissue_pos.iloc[i+1,4]) / 3.0
+    fig.savefig("../out/correlation_"+name+".png")
+    plt.close()
 
-    pos_x1 = int(center_x)-radius
-    pos_x2 = int(center_x)+radius
-    pos_y1 = int(center_y)-radius
-    pos_y2 = int(center_y)+radius
-    
-    I = cv2.rectangle(I, (pos_x1,pos_y1), (pos_x2,pos_y2), (0, 255, 0), 2)
-    I = cv2.putText(I, str(count_inter), (pos_x1,pos_y1), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 255, 0), lineType=cv2.LINE_AA, thickness=2)
+    ### Hist2
+    fig = plt.figure()
 
-    count_inter += 1
-    
-    if i % 2 == 0:
-        if i-127 < 0:
-            continue
+    plt.hist(corR, bins=20)
+    plt.xlim([-1,1])
 
-        center_x = (tissue_pos.iloc[i-129,5] + tissue_pos.iloc[i,5] + tissue_pos.iloc[i-127,5]) / 3.0
-        center_y = (tissue_pos.iloc[i-129,4] + tissue_pos.iloc[i,4] + tissue_pos.iloc[i-127,4]) / 3.0
+    plt.xlabel("Pearson correlation coefficient", fontsize=20)
+    plt.ylabel("Frequency", fontsize=20)
 
-    else:
-        if i+127 > 4991:
-            continue
+    fig.savefig("../out/correlation2_"+name+".png")
+    plt.close()
 
-        center_x = (tissue_pos.iloc[i+127,5] + tissue_pos.iloc[i,5] + tissue_pos.iloc[i+129,5]) / 3.0
-        center_y = (tissue_pos.iloc[i+127,4] + tissue_pos.iloc[i,4] + tissue_pos.iloc[i+129,4]) / 3.0
 
-    pos_x1 = int(center_x)-radius
-    pos_x2 = int(center_x)+radius
-    pos_y1 = int(center_y)-radius
-    pos_y2 = int(center_y)+radius
-    
-    I = cv2.rectangle(I, (pos_x1,pos_y1), (pos_x2,pos_y2), (0, 0, 255), 2)
-    I = cv2.putText(I, str(count_inter), (pos_x1,pos_y1), cv2.FONT_HERSHEY_DUPLEX, 1.0, (0, 0, 255), lineType=cv2.LINE_AA, thickness=2)
 
-    count_inter += 1
+### ROC curve, AUC
+def ROC_AUC(valid_labels, valid_preds_soft, name):
+    fpr_all, tpr_all, thresholds_all = roc_curve(valid_labels, valid_preds_soft, drop_intermediate=False)
 
+    auc = roc_auc_score(valid_labels, valid_preds_soft)
 
+    with open("../out/AUC_"+name+".txt", mode='w') as f:
+        f.write(str(auc))
 
-### save Image
-cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/original_image_with_spots_inter.tif", I)
+    plt.figure()
+    plt.rcParams["font.size"] = 20
 
-
-
-### split Image
-count_inter = 0
-
-I = I_org.copy()
-
-image_list = pd.DataFrame(columns=['No','pos_x1','pos_y1','radius'])
-
-for i in range(4992):
-    
-    if tissue_pos.iloc[i,3] == 0 or tissue_pos.iloc[i,3] == 127:
-        continue
-       
-    center_x = (tissue_pos.iloc[i-1,5] + tissue_pos.iloc[i,5] + tissue_pos.iloc[i+1,5]) / 3.0
-    center_y = (tissue_pos.iloc[i-1,4] + tissue_pos.iloc[i,4] + tissue_pos.iloc[i+1,4]) / 3.0
-
-    pos_x1 = int(center_x)-radius
-    pos_x2 = int(center_x)+radius
-    pos_y1 = int(center_y)-radius
-    pos_y2 = int(center_y)+radius
-    
-    I2 = I[pos_y1:pos_y2, pos_x1:pos_x2]
-    cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/spot_images_inter/spot_image_inter_"+str(count_inter).zfill(4)+"_"+str(int(center_x))+"_"+str(int(center_y))+".tif", I2)
-    
-    image_list = image_list.append([pd.Series([count_inter,int(center_x),int(center_y),radius],index=image_list.columns)], ignore_index=True)
-    
-    count_inter += 1
-    
-    if i % 2 == 0:
-        if i-127 < 0:
-            continue
-
-        center_x = (tissue_pos.iloc[i-129,5] + tissue_pos.iloc[i,5] + tissue_pos.iloc[i-127,5]) / 3.0
-        center_y = (tissue_pos.iloc[i-129,4] + tissue_pos.iloc[i,4] + tissue_pos.iloc[i-127,4]) / 3.0
-
-    else:
-        if i+127 > 4991:
-            continue
-
-        center_x = (tissue_pos.iloc[i+127,5] + tissue_pos.iloc[i,5] + tissue_pos.iloc[i+129,5]) / 3.0
-        center_y = (tissue_pos.iloc[i+127,4] + tissue_pos.iloc[i,4] + tissue_pos.iloc[i+129,4]) / 3.0
-
-    pos_x1 = int(center_x)-radius
-    pos_x2 = int(center_x)+radius
-    pos_y1 = int(center_y)-radius
-    pos_y2 = int(center_y)+radius
-    
-    I2 = I[pos_y1:pos_y2, pos_x1:pos_x2]
-    cv2.imwrite(dirName+"/CropImage/size_"+str(extraSize)+"/spot_images_inter/spot_image_inter_"+str(count_inter).zfill(4)+"_"+str(int(center_x))+"_"+str(int(center_y))+".tif", I2)
-    
-    image_list = image_list.append([pd.Series([count_inter,int(center_x),int(center_y),radius],index=image_list.columns)], ignore_index=True)
-
-    count_inter += 1
-
-
-# # Make RGB filter list (interpolation)
-
-
-### interpolated image list ###
-image_list['ImageFilter'] = "null"
-image_list['image_path'] = [dirName+"/CropImage/size_"+str(extraSize)+"/spot_images_inter/spot_image_inter_"+str(no).zfill(4)+"_"+str(x)+"_"+str(y)+".tif" for no,x,y in zip(image_list['No'],image_list['pos_x1'],image_list['pos_y1'])]
-
-print("image_list: "+str(image_list.shape))
-print(image_list.head())
-
-
-
-### mkdir
-subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/NG_inter/"])
-subprocess.call(["mkdir","-p",dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/OK_inter/"])
-
-
-
-### count mean RGB values ###
-mean_value_list = list()
-
-for i in image_list.index:
-    #print(i)
-    
-    I = cv2.imread(image_list.loc[i,'image_path'])
-
-    total_value = np.sum(I[:,:,0]) + np.sum(I[:,:,1]) + np.sum(I[:,:,2])
-    
-    total_value = total_value / (I.shape[0] * I.shape[1]) / 3
-    
-    mean_value_list.append(total_value)
-
-
-
-image_list['mean_RGB'] = [round(f, 4) for f in mean_value_list]
-
-print("image_list: "+str(image_list.shape))
-print(image_list.head())
-
-
-
-## read RGB threshold
-with open(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/white_th.txt", mode='r') as f:
-    white_th = f.read().splitlines()[0]
-    white_th = float(white_th)
-
-white_th
-
-print("white_th: "+str(white_th))
-
-
-
-# Histgram
-fig = plt.figure()
-
-plt.hist(mean_value_list, bins=50)
-
-plt.xlabel("mean RGB", fontsize=20)
-plt.ylabel("Frequency", fontsize=20)
-
-plt.axvline(x=white_th, color='r')
-
-fig.savefig(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/meanRGB_inter.png")
-
-plt.close()
-
-
-
-### Threshold percentage ###
-pixel_th_white = I.shape[0] * I.shape[1] * 0.5
-
-print("pixel_th_white: "+str(pixel_th_white))
-
-
-
-### load Image
-for i in image_list.index:
-    #print(i)
-    
-    I = cv2.imread(image_list.loc[i,'image_path'])
-    
-    ### color threshold (white)
-    count_white = sum(np.logical_and.reduce((I[:,:,0] > white_th, I[:,:,1] > white_th, I[:,:,2] > white_th)))
-    
-    if sum(count_white) > pixel_th_white:
-        subprocess.call(["cp","-p",image_list.loc[image_list.index == i,"image_path"].tolist()[0],dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/NG_inter/"])
-        image_list.loc[image_list.index == i,"ImageFilter"] = "NG"
-    else:
-        subprocess.call(["cp","-p",image_list.loc[image_list.index == i,"image_path"].tolist()[0],dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/OK_inter/"])
-        image_list.loc[image_list.index == i,"ImageFilter"] = "OK"
- 
-
-
-
-image_list.to_csv(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/image_list_inter.txt", index=False, sep='\t')
-
-
-
-
+    plt.plot(fpr_all, tpr_all, marker='o', color='blue')
+    plt.xlabel("FPR: False positive rate", fontsize=20)
+    plt.ylabel("TPR: True positive rate", fontsize=20)
+    plt.tick_params(labelsize=12)
+    plt.grid()
+    plt.text(0.6, 0.05, "AUC="+'{:.3f}'.format(auc, size=10, color = "black"))
+    plt.subplots_adjust(left=0.2, right=0.9, bottom=0.16, top=0.9)
+    plt.savefig("../out/roc_curve_"+name+".png")
+    plt.close()
 
 
 
