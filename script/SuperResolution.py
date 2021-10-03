@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 import glob
 import os.path as osp
@@ -59,16 +57,11 @@ from BasicLib import plot_loss
 from BasicLib import plot_correlation_scatter_hist
 
 
-# In[2]:
-
 
 parser = argparse.ArgumentParser(description='Super-resolution')
 
 parser.add_argument('--dataDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/data',
                    help='Data directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/data'+')')
-
-parser.add_argument('--modelDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/out',
-                   help='Model directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/out'+')')
 
 parser.add_argument('--outDir', type=str, default='/home/'+os.environ['USER']+'/DeepSpaCE/out',
                    help='Output directory (default: '+'/home/'+os.environ['USER']+'/DeepSpaCE/out'+')')
@@ -90,6 +83,9 @@ parser.add_argument('--cuda', action='store_true',
 
 parser.add_argument('--full', action='store_true',
                     help='Enables full training')
+
+parser.add_argument('--model', type=str, choices=['VGG16','DenseNet121'], default='DenseNet121',
+                    help='Deep learning model')
 
 parser.add_argument('--modelName', type=str, choices=['teacher', 'student1', 'student2', 'student3', 'student4', 'student5'], default='teacher',
                    help=' (default: teacher)')
@@ -115,20 +111,13 @@ parser.add_argument('--cluster_num', type=int, default=7,
 args = parser.parse_args()
 
 
-# In[3]:
-
 
 print(args)
 
 
-# In[4]:
-
 
 dataDir = args.dataDir
 print("dataDir: "+str(dataDir))
-
-modelDir = args.modelDir
-print("modelDir: "+str(modelDir))
 
 outDir = args.outDir
 print("outDir: "+str(outDir))
@@ -151,6 +140,9 @@ print("threads: "+str(threads))
 extraSize = args.extraSize
 print("extraSize: "+str(extraSize))
 
+model = args.model
+print("model: "+str(model))
+
 modelName = args.modelName
 print("modelName: "+str(modelName))
 
@@ -164,21 +156,15 @@ cuda = args.cuda and torch.cuda.is_available()
 print("cuda: "+str(cuda))
 
 
-# In[5]:
-
 
 sampleNames = args.sampleNames.split(',')
 print("sampleName: "+str(sampleNames))
 
 
-# In[6]:
-
 
 geneSymbols = args.geneSymbols.split(',')
 print(geneSymbols)
 
-
-# In[7]:
 
 
 size = 224
@@ -191,8 +177,6 @@ std = (0.229, 0.224, 0.225)
 print("std: "+str(std))
 
 
-# In[8]:
-
 
 print("### Set seeds ###")
 torch.manual_seed(seed)
@@ -202,14 +186,10 @@ random.seed(seed)
 torch.set_num_threads(threads)
 
 
-# In[9]:
-
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-
-# In[10]:
 
 
 print("### Check GPU availability ###")
@@ -218,8 +198,6 @@ print("device: ", device)
 
 
 # # make DataSet
-
-# In[11]:
 
 
 print("### load image list ###")
@@ -234,16 +212,12 @@ print("image_list: "+str(image_list.shape))
 image_list.head()
 
 
-# In[12]:
-
 
 image_list = image_list.loc[image_list['ImageFilter'] == 'OK',]
 
 print("image_list: "+str(image_list.shape))
 image_list.head()
 
-
-# In[13]:
 
 
 print("### make dataset ###")
@@ -258,8 +232,6 @@ index = 1
 print(valid_dataset.__getitem__(index)[0].size())
 print(valid_dataset.__getitem__(index)[1])
 
-
-# In[14]:
 
 
 print("### make DataLoader ###")
@@ -286,10 +258,8 @@ print(labels.size())
 
 # # Validation
 
-# In[19]:
 
-
-files = os.listdir(modelDir+"/model_"+modelName)
+files = os.listdir(outDir+"/model_"+modelName)
 best_model = files[0]
 best_model
 
@@ -300,27 +270,49 @@ best_model
 
 # # make model
 
-# In[16]:
+
+#use_pretrained = False
+#print("use_pretrained: "+str(use_pretrained))
+#net = models.vgg16(pretrained=use_pretrained)
+#
+#if ClusterPredictionMode:
+#    net.classifier[6] = nn.Linear(in_features=4096, out_features=cluster_num)
+#else:
+#    net.classifier[6] = nn.Linear(in_features=4096, out_features=len(geneSymbols))
+
 
 
 use_pretrained = False
 print("use_pretrained: "+str(use_pretrained))
-net = models.vgg16(pretrained=use_pretrained)
+
 
 if ClusterPredictionMode:
-    net.classifier[6] = nn.Linear(in_features=4096, out_features=cluster_num)
+    num_features = cluster_num
 else:
-    net.classifier[6] = nn.Linear(in_features=4096, out_features=len(geneSymbols))
+    num_features = len(geneSymbols)
+    
 
+if model == "VGG16":
+    # load VGG16 model
+    net = torchvision.models.vgg16(pretrained=use_pretrained)
 
-# In[17]:
+    # change the last unit of VGG16
+    net.classifier[6] = nn.Linear(in_features=4096, out_features=num_features)
+
+elif model == "DenseNet121":
+    # load DenseNet121 model
+    net = torchvision.models.densenet121(pretrained=use_pretrained)
+
+    # change the last unit of VGG16
+    net.classifier = nn.Linear(in_features=1024, out_features=num_features)
+
 
 
 print("### load the best model ###")
 if str(device) != 'cpu':
-    net.load_state_dict(torch.load(modelDir+"/model_"+modelName+"/"+best_model))
+    net.load_state_dict(torch.load(outDir+"/model_"+modelName+"/"+best_model))
 else:
-    net.load_state_dict(torch.load(modelDir+"/model_"+modelName+"/"+best_model, map_location={'cuda:0': 'cpu'}))
+    net.load_state_dict(torch.load(outDir+"/model_"+modelName+"/"+best_model, map_location={'cuda:0': 'cpu'}))
 
 
 

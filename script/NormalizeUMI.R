@@ -1,12 +1,30 @@
+#!/usr/bin/env Rscript
+
+.libPaths("")
 rm(list=ls())
-#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 options(stringsAsFactors=F)
+
+#library(dplyr, lib.loc="/usr/local/lib/R/site-library/")
+#library(data.table, lib.loc="/usr/local/lib/R/site-library/")
+
+#library(Seurat, lib.loc="/usr/local/lib/R/site-library/")
+#library(ggplot2, lib.loc="/usr/local/lib/R/site-library/")
+#library(patchwork, lib.loc="/usr/local/lib/R/site-library/")
+
+#library(Matrix, lib.loc="/usr/lib/R/library/")
+#library(cowplot, lib.loc="/usr/local/lib/R/site-library/")
+#library(RColorBrewer, lib.loc="/usr/local/lib/R/site-library/")
+#library(grid, lib.loc="/usr/local/lib/R/site-library/")
+#library(readbitmap, lib.loc="/usr/local/lib/R/site-library/")
+#library(argparse, lib.loc="/usr/local/lib/R/site-library/")
+
+
+library(dplyr)
+library(data.table)
 
 library(Seurat)
 library(ggplot2)
 library(patchwork)
-library(dplyr)
-library(data.table)
 
 library(Matrix)
 library(cowplot)
@@ -21,7 +39,7 @@ parser <- ArgumentParser()
 
 parser$add_argument("--dataDir", default=paste0("/home/",Sys.getenv("USER"),"/DeepSpaCE/data"),
                     help="Data directory [default %(default)s]")
-parser$add_argument("--sampleName", default="Human_Breast_Cancer_Block_A_Section_1",
+parser$add_argument("--sampleName", default="Breast_Cancer_Block_A_Section_1",
                     help="Sample name [default %(default)s]")
 parser$add_argument("--threshold_count", type="integer", default=1000,
                     help="TODO [default %(default)s]")
