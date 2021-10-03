@@ -103,6 +103,7 @@ Build an image on your local environment since root privileges are required. The
             --dataDir /home/$USER/DeepSpaCE/data \
             --outDir /home/$USER/DeepSpaCE/out \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
+            --model VGG16 \
             --seed 0 \
             --threads 8 \
             --GPUs 1 \
