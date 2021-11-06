@@ -41,7 +41,7 @@ Build an image on your local environment since root privileges are required. The
 
 2. TIFF image (same directory)
 
-    /home/$USER/DeepSpaCE/data/{sampleName}/SpaceRanger/image.tiff
+    /home/$USER/DeepSpaCE/data/{sampleName}/SpaceRanger/image.tif
 
 
 
