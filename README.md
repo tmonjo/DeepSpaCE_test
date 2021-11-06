@@ -48,7 +48,7 @@ Build an image on your local environment since root privileges are required. The
 ## Preprocessing 1: Section image files
 
     singularity exec DeepSpaCE.sif \
-        python CropImage.py \
+        python script/CropImage.py \
             --dataDir /home/$USER/DeepSpaCE/data \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --transposeType 0 \
@@ -59,7 +59,7 @@ Build an image on your local environment since root privileges are required. The
 ## Preprocessing 2: Satial expression data measured by Visium
 
     singularity exec DeepSpaCE.sif \
-        Rscript NormalizeUMI.R \
+        Rscript script/NormalizeUMI.R \
             --dataDir /home/$USER/DeepSpaCE/data \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
             --threshold_count 1000 \
@@ -68,7 +68,7 @@ Build an image on your local environment since root privileges are required. The
 ## Run DeepSpaCE (Training and validation)
 
     singularity exec --nv DeepSpaCE.sif \
-        python DeepSpaCE.py \
+        python script/DeepSpaCE.py \
             --dataDir /home/$USER/DeepSpaCE/data \
             --outDir /home/$USER/DeepSpaCE/out \
             --sampleNames_train Human_Breast_Cancer_Block_A_Section_1 \
@@ -99,7 +99,7 @@ Build an image on your local environment since root privileges are required. The
 ### Run super-resolution
 
     singularity exec --nv DeepSpaCE.sif \
-        python ./SuperResolution.py \
+        python script/SuperResolution.py \
             --dataDir /home/$USER/DeepSpaCE/data \
             --outDir /home/$USER/DeepSpaCE/out \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
@@ -117,7 +117,7 @@ Build an image on your local environment since root privileges are required. The
 ### Plot a super-resolved image
 
     singularity exec DeepSpaCE.sif \
-        Rscript ./PlotSuperResolution.R \
+        Rscript script/PlotSuperResolution.R \
             --dataDir /home/$USER/DeepSpaCE/data \
             --outDir /home/$USER/DeepSpaCE/out \
             --sampleName Human_Breast_Cancer_Block_A_Section_1 \
