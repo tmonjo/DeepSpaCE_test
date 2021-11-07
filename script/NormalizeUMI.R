@@ -99,9 +99,6 @@ write.table(mat_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_log10.txt"
 write.table(mat_SCT_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_SCT_log10.txt"),quote=F,sep="\t",row.names=F,col.names=T)
 
 
-gene_list_before <- mat_log10$symbol
-
-
 
 ### Filtering low expression ###
 visiumData_fil <- subset(visiumData, subset = nCount_Spatial >= threshold_count & nFeature_Spatial >= threshold_gene)
@@ -149,10 +146,8 @@ write.table(mat_SCT_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_fil_SC
 
 
 ###################################################################################################
-gene_list_after <- mat_log10$symbol
-
-print(paste0("Number of genes (before filtering): ",length(gene_list_before)))
-print(paste0("Number of genes (after filtering): ",length(gene_list_after)))
+print(paste0("Number of genes (before SCT): ",nrow(mat_log10)))
+print(paste0("Number of genes (after SCT): ",nrow(mat_SCT_log10)))
 
 
 ###################################################################################################
