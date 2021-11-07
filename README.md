@@ -65,7 +65,7 @@ Build an image on your local environment since root privileges are required. The
             --threshold_count 1000 \
             --threshold_gene 1000
 
-## Run DeepSpaCE (Training and validation)
+## Run DeepSpaCE (Training and validation) (running on GPU is recommended)
 
     singularity exec --nv DeepSpaCE.sif \
         python script/DeepSpaCE.py \
@@ -98,7 +98,7 @@ Build an image on your local environment since root privileges are required. The
 
 ### Run super-resolution
 
-    singularity exec --nv DeepSpaCE.sif \
+    singularity exec　DeepSpaCE.sif \
         python script/SuperResolution.py \
             --dataDir /home/$USER/DeepSpaCE/data \
             --outDir /home/$USER/DeepSpaCE/out \
@@ -106,8 +106,6 @@ Build an image on your local environment since root privileges are required. The
             --model VGG16 \
             --seed 0 \
             --threads 8 \
-            --GPUs 1 \
-            --cuda \
             --modelName teacher \
             --batch_size 128 \
             --extraSize 150 \
