@@ -75,12 +75,6 @@ parser.add_argument('--seed', type=int, default=0,
 parser.add_argument('--threads', type=int, default=8,
                    help='Number of CPU threads (default: 8)')
 
-parser.add_argument('--GPUs', type=int, default=1,
-                   help='Number of GPUs (default: 1)')
-
-parser.add_argument('--cuda', action='store_true',
-                    help='Enables CUDA training')
-
 parser.add_argument('--full', action='store_true',
                     help='Enables full training')
 
@@ -122,11 +116,8 @@ print("dataDir: "+str(dataDir))
 outDir = args.outDir
 print("outDir: "+str(outDir))
 
-batch_size = args.batch_size * args.GPUs
+batch_size = args.batch_size
 print("batch_size: "+str(batch_size))
-
-cuda = args.cuda and torch.cuda.is_available()
-print("cuda: "+str(cuda))
 
 quantileRGB = args.quantileRGB
 print("quantileRGB: "+str(quantileRGB))
@@ -151,9 +142,6 @@ print("ClusterPredictionMode: "+str(ClusterPredictionMode))
 
 cluster_num = args.cluster_num
 print("cluster_num: "+str(cluster_num))
-
-cuda = args.cuda and torch.cuda.is_available()
-print("cuda: "+str(cuda))
 
 
 
@@ -189,12 +177,6 @@ torch.set_num_threads(threads)
 
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
-
-
-
-print("### Check GPU availability ###")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("device: ", device)
 
 
 # # make DataSet
@@ -309,10 +291,7 @@ elif model == "DenseNet121":
 
 
 print("### load the best model ###")
-if str(device) != 'cpu':
-    net.load_state_dict(torch.load(outDir+"/model_"+modelName+"/"+best_model))
-else:
-    net.load_state_dict(torch.load(outDir+"/model_"+modelName+"/"+best_model, map_location={'cuda:0': 'cpu'}))
+net.load_state_dict(torch.load(outDir+"/model_"+modelName+"/"+best_model, map_location={'cuda:0': 'cpu'}))
 
 
 

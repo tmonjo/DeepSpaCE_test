@@ -38,6 +38,9 @@ parser.add_argument('--extraSize', type=int, default=150,
 parser.add_argument('--quantileRGB', type=int, default=80,
                    help='Threshold of quantile RGB (default: 80)')
 
+parser.add_argument('--threads', type=int, default=1,
+                    help='Number of CPU threads (default: 1)')
+
 args = parser.parse_args()
 
 
@@ -63,6 +66,13 @@ print("extraSize: "+str(extraSize))
 
 quantileRGB = args.quantileRGB
 print("quantileRGB: "+str(quantileRGB))
+
+threads = args.threads
+print("threads: "+str(threads))
+
+
+
+os.environ["OMP_NUM_THREADS"] = str(threads)
 
 
 
@@ -504,6 +514,10 @@ for i in image_list.index:
 
 
 image_list.to_csv(dirName+"/CropImage/size_"+str(extraSize)+"/RGB_"+str(quantileRGB)+"/image_list_inter.txt", index=False, sep='\t')
+
+
+
+
 
 
 

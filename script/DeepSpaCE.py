@@ -258,6 +258,11 @@ print("std: "+str(std))
 
 
 
+print("### make outDir ###")
+os.makedirs(outDir, exist_ok=True)
+
+
+
 print("### Set seeds ###")
 torch.manual_seed(seed)
 np.random.seed(seed)

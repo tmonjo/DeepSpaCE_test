@@ -837,8 +837,6 @@ def makeDataListSemi(rootDir, sampleNames, semiType, ImageSet, semiName):
             image_l = pd.read_csv(rootDir+"/"+semiType+"/ImageSet/out/ImageSet_"+str(i_imageSet)+"/image_list.txt", sep='\t')
             image_list = image_list.append(image_l, ignore_index=True)
 
-    ## ABCI ##
-    image_list['image_path'] = [s.replace("/home/","/groups1/gcc50467/") for s in image_list['image_path'].tolist()]
 
     image_list['Sample'] = semiType
     image_list['imageID'] = image_list['sample_No']

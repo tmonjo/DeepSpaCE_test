@@ -4,21 +4,6 @@
 rm(list=ls())
 options(stringsAsFactors=F)
 
-#library(dplyr, lib.loc="/usr/local/lib/R/site-library/")
-#library(data.table, lib.loc="/usr/local/lib/R/site-library/")
-
-#library(Seurat, lib.loc="/usr/local/lib/R/site-library/")
-#library(ggplot2, lib.loc="/usr/local/lib/R/site-library/")
-#library(patchwork, lib.loc="/usr/local/lib/R/site-library/")
-
-#library(Matrix, lib.loc="/usr/lib/R/library/")
-#library(cowplot, lib.loc="/usr/local/lib/R/site-library/")
-#library(RColorBrewer, lib.loc="/usr/local/lib/R/site-library/")
-#library(grid, lib.loc="/usr/local/lib/R/site-library/")
-#library(readbitmap, lib.loc="/usr/local/lib/R/site-library/")
-#library(argparse, lib.loc="/usr/local/lib/R/site-library/")
-
-
 library(dplyr)
 library(data.table)
 
@@ -114,6 +99,10 @@ write.table(mat_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_log10.txt"
 write.table(mat_SCT_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_SCT_log10.txt"),quote=F,sep="\t",row.names=F,col.names=T)
 
 
+gene_list_before <- mat_log10$symbol
+
+
+
 ### Filtering low expression ###
 visiumData_fil <- subset(visiumData, subset = nCount_Spatial >= threshold_count & nFeature_Spatial >= threshold_gene)
 
@@ -158,6 +147,12 @@ mat_SCT_log10 <- mat_SCT_log10[,c(ncol(mat_SCT_log10),1:(ncol(mat_SCT_log10)-1))
 write.table(mat_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_fil_log10.txt"),quote=F,sep="\t",row.names=F,col.names=T)
 write.table(mat_SCT_log10,paste0(dataDir,"/",sampleName,"/NormUMI/exp_mat_fil_SCT_log10.txt"),quote=F,sep="\t",row.names=F,col.names=T)
 
+
+###################################################################################################
+gene_list_after <- mat_log10$symbol
+
+print(paste0("Number of genes (before filtering): ",length(gene_list_before)))
+print(paste0("Number of genes (after filtering): ",length(gene_list_after)))
 
 
 ###################################################################################################
