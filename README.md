@@ -1,4 +1,4 @@
-# DeepSpaCE
+# DeepSpaCE (test)
 
 The **Deep** learning model for **Spa**tial gene **C**lusters and **E**xpression (DeepSpaCE) is a method that predicts spatial gene-expression levels and transcriptomic cluster types from tissue section images using deep learning.
 
